@@ -217,7 +217,7 @@ function Home() {
             {/* Lion Card with local image */}
             <div className="bg-gray-800 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 mt-6">
               <Image
-                src={withBasePath("/images/download.jpg")}
+                src={withBasePath("/images/dowload.jpg")}
                 alt="Lion"
                 width={300}
                 height={200}
