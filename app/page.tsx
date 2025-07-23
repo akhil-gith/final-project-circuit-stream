@@ -217,7 +217,7 @@ function Home() {
             {/* Lion Card with local image */}
             <div className="bg-gray-800 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 mt-6">
               <Image
-                src={withBasePath("https://via.placeholder.com/300x200?text=Lion")}
+                src={withBasePath("/download.jpg")}
                 alt="Lion"
                 width={300}
                 height={200}
