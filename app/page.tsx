@@ -78,8 +78,22 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
+    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
+      {/* Jungle Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed top-0 left-0 w-full h-full object-cover z-0"
+        style={{ pointerEvents: 'none' }}
+      >
+        <source src={withBasePath("/videos/jungle.mp4")} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
       {/* Top Navigation Bar with Horizontal Menu */}
+      {/* Content overlay to ensure text is readable over video */}
+      <div className="relative z-10">
       <header className="sticky top-0 bg-gray-900 z-50 border-b border-gray-800">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-0 sm:p-4 gap-0 sm:gap-4">
           {/* Mobile vertical menu */}
@@ -266,6 +280,7 @@ function Home() {
           </section>
         </div>
       </main>
+      </div>
     </div>
   );
 }
