@@ -1,7 +1,6 @@
 
 "use client";
 import Image from "next/image";
-import { signIn, signOut, useSession, SessionProvider } from "next-auth/react";
 import { useState } from "react";
 import {
   Home as HomeIcon,
@@ -42,8 +41,8 @@ const animalData = [
   },
 ];
 
+
 function Home() {
-  const { data: session } = useSession();
   const [location, setLocation] = useState("");
   const [animals, setAnimals] = useState(animalData);
 
@@ -91,39 +90,8 @@ function Home() {
               </nav>
             </div>
             <div className="flex items-center gap-4 p-4 sm:p-0">
-              {!session ? (
-                <>
-                  <button
-                    onClick={() => signIn("google")}
-                    className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700 text-sm"
-                  >
-                    Sign in with Google
-                  </button>
-                  <button
-                    onClick={() => signIn("github")}
-                    className="bg-gray-700 px-3 py-1 rounded hover:bg-gray-800 text-sm"
-                  >
-                    Sign in with GitHub
-                  </button>
-                </>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Image
-                    src={session.user?.image || "/default-avatar.png"}
-                    alt="Profile"
-                    width={36}
-                    height={36}
-                    className="rounded-full"
-                  />
-                  <span className="text-sm">{session.user?.name}</span>
-                  <button
-                    onClick={() => signOut()}
-                    className="bg-red-600 px-3 py-1 rounded hover:bg-red-700 text-sm"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              )}
+              {/* Auth buttons removed for static export */}
+              <span className="text-gray-400 text-sm">Welcome, Guest!</span>
             </div>
           </div>
         </div>
@@ -285,9 +253,5 @@ function Home() {
 }
 
 export default function HomePage() {
-  return (
-    <SessionProvider>
-      <Home />
-    </SessionProvider>
-  );
+  return <Home />;
 }
