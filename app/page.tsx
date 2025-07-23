@@ -1,3 +1,6 @@
+
+"use client";
+
 // Utility function to prefix image sources for GitHub Pages
 function withBasePath(src: string): string {
   // Detect if running on GitHub Pages (e.g., https://userid.github.io/repo-name)
@@ -12,7 +15,6 @@ function withBasePath(src: string): string {
   return src;
 }
 
-"use client";
 import Image from "next/image";
 import { useState } from "react";
 import {
