@@ -1,3 +1,16 @@
+// Utility function to prefix image sources for GitHub Pages
+function withBasePath(src: string): string {
+  // Detect if running on GitHub Pages (e.g., https://userid.github.io/repo-name)
+  if (typeof window !== 'undefined') {
+    const { hostname, pathname } = window.location;
+    // Check for github.io domain and repo path
+    const match = hostname.endsWith('github.io') && pathname.startsWith('/final-project-circuit-stream');
+    if (match && src.startsWith('/')) {
+      return `/final-project-circuit-stream${src}`;
+    }
+  }
+  return src;
+}
 
 "use client";
 import Image from "next/image";
@@ -169,7 +182,7 @@ function Home() {
                   className="bg-gray-800 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6"
                 >
                   <Image
-                    src={animal.image}
+                    src={withBasePath(animal.image)}
                     alt={animal.name}
                     width={300}
                     height={200}
@@ -202,7 +215,7 @@ function Home() {
             {/* Lion Card with local image */}
             <div className="bg-gray-800 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 mt-6">
               <Image
-                src="https://via.placeholder.com/300x200?text=Lion"
+                src={withBasePath("https://via.placeholder.com/300x200?text=Lion")}
                 alt="Lion"
                 width={300}
                 height={200}
@@ -233,15 +246,18 @@ function Home() {
             <h2 className="text-xl font-bold mb-6 text-center">Our Partners</h2>
             <div className="flex flex-wrap justify-center items-center gap-8">
               <div className="flex flex-col items-center">
-                <img src="/next.svg" alt="Next.js" className="h-12 mb-2" />
+                <img src={withBasePath("/next.svg")}
+                  alt="Next.js" className="h-12 mb-2" />
                 <span className="text-gray-300 text-sm">Next.js</span>
               </div>
               <div className="flex flex-col items-center">
-                <img src="/vercel.svg" alt="Vercel" className="h-12 mb-2" />
+                <img src={withBasePath("/vercel.svg")}
+                  alt="Vercel" className="h-12 mb-2" />
                 <span className="text-gray-300 text-sm">Vercel</span>
               </div>
               <div className="flex flex-col items-center">
-                <img src="/globe.svg" alt="Globe" className="h-12 mb-2" />
+                <img src={withBasePath("/globe.svg")}
+                  alt="Globe" className="h-12 mb-2" />
                 <span className="text-gray-300 text-sm">Globe</span>
               </div>
             </div>
