@@ -250,7 +250,6 @@ function Home() {
                 </span>
               </div>
             </div>
-            )}
           </div>
 
           {/* About Us Section */}
