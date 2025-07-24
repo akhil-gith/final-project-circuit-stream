@@ -2,7 +2,7 @@
 "use client";
 
 
-import Image from "next/image";
+// import Image from "next/image";
 import { useState } from "react";
 import {
   Home as HomeIcon,
@@ -143,12 +143,9 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 }
 
 function Home() {
-  const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
-  const [showAdvice, setShowAdvice] = useState(false);
   const [location, setLocation] = useState("");
   const [animals, setAnimals] = useState<Animal[]>(animalData);
   // Removed unused sightings state
-  const [menuOpen, setMenuOpen] = useState(false);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lon: number } | null>(null); // {lat, lon}
   // Auth state
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
