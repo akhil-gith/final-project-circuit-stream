@@ -192,7 +192,7 @@ function Home() {
               animals.map(animal => (
                 <div
                   key={animal.name}
-                  className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 backdrop-blur-sm"
+                  className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-col items-center gap-6 backdrop-blur-sm w-[400px]"
                 >
                   <Image
                     src={`/final-project-circuit-stream${animal.image}`}
