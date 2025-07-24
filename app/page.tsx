@@ -185,7 +185,7 @@ function Home() {
           </section>
 
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-row flex-wrap gap-6 justify-center">
             {animals.length === 0 ? (
               <p className="text-white text-center">No animals found in this location.</p>
             ) : (
