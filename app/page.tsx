@@ -117,6 +117,7 @@ const animalData: Animal[] = [
 export default function HomePage() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
+  const [search, setSearch] = useState("");
   // Map center and markers
   const allLocations = animalData.flatMap(animal => animal.locations || []);
   // Default bounding box for map
@@ -131,6 +132,14 @@ export default function HomePage() {
     bbox = `${minLon-0.5},${minLat-0.5},${maxLon+0.5},${maxLat+0.5}`;
   }
   const markerString = allLocations.map(loc => `&marker=${loc.lon},${loc.lat}`).join("");
+  // Filter animals by search
+  const filteredAnimals = animalData.filter(animal => {
+    const term = search.toLowerCase();
+    return (
+      animal.name.toLowerCase().includes(term) ||
+      (animal.species && animal.species.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
@@ -271,12 +280,22 @@ export default function HomePage() {
       {/* Animal Explorer Section */}
       <div className="flex flex-col items-center mt-8 mb-16 z-10 relative">
         <h1 className="text-3xl font-bold mb-6">Animal Explorer</h1>
+        {/* Search Bar */}
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search animals by name or species..."
+          className="mb-6 px-4 py-2 rounded w-full max-w-md bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {animalData.map(animal => (
+          {filteredAnimals.map(animal => (
             <div key={animal.name} className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center">
               <div className="w-32 h-32 mb-4 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
-                {animal.image && (
+                {animal.image ? (
                   <img src={animal.image} alt={animal.name} className="object-cover w-full h-full" />
+                ) : (
+                  <span className="text-gray-400">No image</span>
                 )}
               </div>
               <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
