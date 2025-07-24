@@ -225,25 +225,6 @@ function Home() {
                 </div>
               ))
             )}
-            {/* Lion Card with local image */}
-            <div className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 mt-6 backdrop-blur-sm">
-              <Image
-                src={"/final-project-circuit-stream/images/download.jpg"}
-                alt="Lion"
-                width={300}
-                height={200}
-                className="object-cover rounded"
-              />
-              <div className="flex flex-col gap-2">
-                <span className="text-lg font-bold">Lion</span>
-                <span>
-                  Diet: <span className="text-red-400">Carnivore</span>
-                </span>
-                <span>
-                  Species: <span className="text-blue-300">Mammal</span>
-                </span>
-              </div>
-            </div>
           </div>
 
           {/* About Us Section */}
