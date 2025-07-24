@@ -127,7 +127,7 @@ function Home() {
       <main className="flex-1 p-6 sm:p-12">
         <div className="text-sm text-gray-400 mb-4">Home / Animal Identifier</div>
 
-        <div className="max-w-2xl mx-auto">
+        <div>
           <h1 className="text-2xl font-bold text-center mb-6">Animal Identifier</h1>
 
           <div className="flex flex-col gap-4 mb-6">
