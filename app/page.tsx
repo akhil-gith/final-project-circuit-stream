@@ -28,31 +28,31 @@ const animalData = [
     name: "Deer",
     diet: "Herbivore",
     species: "Mammal",
-    image: "https://via.placeholder.com/300x200?text=Deer",
+    image: "/images/deer.jpg",
   },
   {
     name: "Lion",
     diet: "Carnivore",
     species: "Mammal",
-    image: "https://via.placeholder.com/300x200?text=Lion",
+    image: "/images/lion.jpg",
   },
   {
     name: "Iguana",
     diet: "Herbivore",
     species: "Reptile",
-    image: "https://via.placeholder.com/300x200?text=Iguana",
+    image: "/images/iguana.jpg",
   },
   {
     name: "Tiger",
     diet: "Carnivore",
     species: "Mammal",
-    image: "https://via.placeholder.com/300x200?text=Tiger",
+    image: "/images/tiger.jpg",
   },
   {
     name: "Tortoise",
     diet: "Herbivore",
     species: "Reptile",
-    image: "https://via.placeholder.com/300x200?text=Tortoise",
+    image: "/images/tortoise.jpg",
   },
 ];
 
