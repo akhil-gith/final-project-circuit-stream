@@ -125,25 +125,62 @@ const animalData = [
 
 
 
+
+function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  // Returns distance in km between two lat/lon points
+  const toRad = (deg: number) => deg * Math.PI / 180;
+  const R = 6371; // Earth radius in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
 function Home() {
   const [location, setLocation] = useState("");
   const [animals, setAnimals] = useState(animalData);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lon: number } | null>(null); // {lat, lon}
 
-  const handleFindAnimals = () => {
-    const query = location.toLowerCase();
-    const filtered = animalData.filter(animal =>
-      (query.includes("forest") && animal.name === "Deer") ||
-      (query.includes("savannah") && animal.name === "Lion") ||
-      (query.includes("jungle") && (animal.name === "Tiger" || animal.name === "Iguana")) ||
-      (query.includes("desert") && animal.name === "Tortoise")
-    );
-    setAnimals(filtered.length ? filtered : []);
+  const handleFindAnimals = async () => {
+    // Try to parse as lat,lon first
+    let lat = null, lon = null;
+    const coordMatch = location.match(/^\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if (coordMatch) {
+      lat = parseFloat(coordMatch[1]);
+      lon = parseFloat(coordMatch[2]);
+    } else {
+      // Geocode using Nominatim
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
+        const data = await resp.json();
+        if (data && data.length > 0) {
+          lat = parseFloat(data[0].lat);
+          lon = parseFloat(data[0].lon);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (lat !== null && lon !== null) {
+      setMapCenter({ lat, lon });
+      // Find animals with any location within 500km
+      const filtered = animalData.filter(animal =>
+        animal.locations && animal.locations.some(loc => haversine(lat, lon, loc.lat, loc.lon) <= 500)
+      );
+      setAnimals(filtered.length ? filtered : []);
+    } else {
+      setAnimals([]);
+    }
   };
 
   const handleRefresh = () => {
     setLocation("");
     setAnimals(animalData);
+    setMapCenter(null);
   };
 
 
@@ -152,9 +189,12 @@ function Home() {
   // Gather all animal locations for the filtered list
   const allLocations = animals.flatMap(animal => animal.locations || []);
 
-  // Calculate map bounding box to fit all markers, or use default
+  // If mapCenter is set, center map there, else fit all markers or use default
   let bbox = "-0.09,51.505,-0.08,51.51";
-  if (allLocations.length > 0) {
+  if (mapCenter) {
+    // 1 degree ~ 111km, so 1 deg box is ~222km wide/high
+    bbox = `${mapCenter.lon-1},${mapCenter.lat-1},${mapCenter.lon+1},${mapCenter.lat+1}`;
+  } else if (allLocations.length > 0) {
     const lats = allLocations.map(loc => loc.lat);
     const lons = allLocations.map(loc => loc.lon);
     const minLat = Math.min(...lats);
