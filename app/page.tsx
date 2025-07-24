@@ -9,7 +9,6 @@ type Animal = {
   species?: string;
   image?: string;
   locations?: { lat: number; lon: number }[];
-  sightings?: { lat: number; lon: number; lastSeen: string }[];
 };
 
 const animalData: Animal[] = [
