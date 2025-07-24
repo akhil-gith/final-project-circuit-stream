@@ -10,7 +10,8 @@ import {
   User as UserIcon,
 } from "lucide-react";
 
-const animalData = [
+// animalData will be filled from API
+const animalData: any[] = [];
   {
     name: "Deer",
     diet: "Herbivore",
@@ -141,7 +142,8 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 
 function Home() {
   const [location, setLocation] = useState("");
-  const [animals, setAnimals] = useState(animalData);
+  const [animals, setAnimals] = useState<any[]>([]);
+  const [sightings, setSightings] = useState<any[]>([]); // {lat, lon, name, lastSeen}
   const [menuOpen, setMenuOpen] = useState(false);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lon: number } | null>(null); // {lat, lon}
 
