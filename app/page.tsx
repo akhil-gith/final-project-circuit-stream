@@ -119,7 +119,12 @@ export default function HomePage() {
   const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
   const [location, setLocation] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [sightings, setSightings] = useState<any[]>([]);
+  type Sighting = {
+    geojson: { coordinates: [number, number] };
+    taxon?: { name?: string };
+    [key: string]: any;
+  };
+  const [sightings, setSightings] = useState<Sighting[]>([]);
   const [loading, setLoading] = useState(false);
   // Geocode location and fetch sightings
   async function handleLocationSearch(e: React.FormEvent) {
@@ -329,7 +334,7 @@ export default function HomePage() {
             <div key={animal.name} className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center">
               <div className="w-32 h-32 mb-4 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
                 {animal.image ? (
-                  <img src={animal.image} alt={animal.name} className="object-cover w-full h-full" />
+                  <Image src={animal.image} alt={animal.name} width={128} height={128} className="object-cover w-full h-full rounded-full" />
                 ) : (
                   <span className="text-gray-400">No image</span>
                 )}
