@@ -161,7 +161,7 @@ function Home() {
           lat = parseFloat(data[0].lat);
           lon = parseFloat(data[0].lon);
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
