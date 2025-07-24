@@ -1,14 +1,7 @@
-
 "use client";
 
-
-// import Image from "next/image";
 import { useState } from "react";
-import {
-  Home as HomeIcon,
-  Search as SearchIcon,
-  User as UserIcon,
-} from "lucide-react";
+import { User as UserIcon } from "lucide-react";
 
 type Animal = {
   name: string;
@@ -27,7 +20,7 @@ const animalData: Animal[] = [
     image: "/images/deer.jpg",
     locations: [
       { lat: 51.505, lon: -0.09 }, // London
-      { lat: 52.520, lon: 13.405 }, // Berlin
+      { lat: 52.52, lon: 13.405 }, // Berlin
     ],
   },
   {
@@ -116,132 +109,18 @@ const animalData: Animal[] = [
     species: "Mammal",
     image: "/images/bear.jpg",
     locations: [
-      { lat: 61.5240, lon: 105.3188 }, // Russia
+      { lat: 61.524, lon: 105.3188 }, // Russia
       { lat: 64.2008, lon: -149.4937 }, // Alaska
     ],
   },
 ];
-// All main JSX and logic should be inside the Home function below
 
-// (Removed duplicate export default)
-
-
-
-
-
-function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  // Returns distance in km between two lat/lon points
-  const toRad = (deg: number) => deg * Math.PI / 180;
-  const R = 6371; // Earth radius in km
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-
-function Home() {
-  const [location, setLocation] = useState("");
-  const [animals, setAnimals] = useState<Animal[]>(animalData);
-  // Removed unused sightings state
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lon: number } | null>(null); // {lat, lon}
-  // Auth state
+export default function HomePage() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
 
-  const handleFindAnimals = async () => {
-    // Try to parse as lat,lon first
-    let lat = null, lon = null;
-    const coordMatch = location.match(/^\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\s*$/);
-    if (coordMatch) {
-      lat = parseFloat(coordMatch[1]);
-      lon = parseFloat(coordMatch[2]);
-    } else {
-      // Geocode using Nominatim
-      try {
-        const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
-        const data = await resp.json();
-        if (data && data.length > 0) {
-          lat = parseFloat(data[0].lat);
-          lon = parseFloat(data[0].lon);
-        }
-      } catch {
-        // ignore
-      }
-    }
-    if (lat !== null && lon !== null) {
-      setMapCenter({ lat, lon });
-      // 8 miles = 12.87 km
-      const RADIUS_KM = 12.87;
-      // Find animals with any location within 8 miles, and sort by closest distance
-      const filtered = animalData
-        .map(animal => {
-          let minDist = Infinity;
-          if (animal.locations) {
-            for (const loc of animal.locations) {
-              const dist = haversine(lat, lon, loc.lat, loc.lon);
-              if (dist < minDist) minDist = dist;
-            }
-          }
-          return { animal, minDist };
-        })
-        .filter(({ minDist }) => minDist <= RADIUS_KM)
-        .sort((a, b) => a.minDist - b.minDist)
-        .map(({ animal }) => animal);
-      setAnimals(filtered.length ? filtered : []);
-    } else {
-      setAnimals([]);
-    }
-  };
-
-  const handleRefresh = () => {
-    setLocation("");
-    setAnimals(animalData);
-    setMapCenter(null);
-  };
-
-
-
-
-  // Gather all animal locations for the filtered list
-  const allLocations = animals.flatMap(animal => animal.locations || []);
-
-  // If mapCenter is set, center map there, else fit all markers or use default
-  let bbox = "-0.09,51.505,-0.08,51.51";
-  if (mapCenter) {
-    // 1 degree ~ 111km, so 1 deg box is ~222km wide/high
-    bbox = `${mapCenter.lon-1},${mapCenter.lat-1},${mapCenter.lon+1},${mapCenter.lat+1}`;
-  } else if (allLocations.length > 0) {
-    const lats = allLocations.map(loc => loc.lat);
-    const lons = allLocations.map(loc => loc.lon);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLon = Math.min(...lons);
-    const maxLon = Math.max(...lons);
-    // Add a small margin
-    bbox = `${minLon-0.5},${minLat-0.5},${maxLon+0.5},${maxLat+0.5}`;
-  }
-
-  // Create marker string for all animal locations
-  const markerString = allLocations.map(loc => `&marker=${loc.lon},${loc.lat}`).join("");
-
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
-      {/* Jungle Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="fixed top-0 left-0 w-full h-full object-cover z-0"
-        style={{ pointerEvents: 'none' }}
-      >
-        <source src="/final-project-circuit-stream/videos/jungle.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-
       {/* Top bar with Login/Signup or Profile */}
       <div className="w-full flex justify-end items-center p-4 z-10 relative">
         {!user ? (
@@ -341,11 +220,24 @@ function Home() {
         </div>
       )}
 
-      {/* ...rest of your JSX... */}
+      {/* Animal Explorer Section */}
+      <div className="flex flex-col items-center mt-16">
+        <h1 className="text-3xl font-bold mb-6">Animal Explorer</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {animalData.map(animal => (
+            <div key={animal.name} className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center">
+              <div className="w-32 h-32 mb-4 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                {animal.image && (
+                  <img src={animal.image} alt={animal.name} className="object-cover w-full h-full" />
+                )}
+              </div>
+              <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
+              <p className="text-gray-400 mb-1">Species: {animal.species}</p>
+              <p className="text-gray-400 mb-1">Diet: {animal.diet}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
-}
-
-export default function HomePage() {
-  return <Home />;
 }
