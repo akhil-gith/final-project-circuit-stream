@@ -16,60 +16,110 @@ const animalData = [
     diet: "Herbivore",
     species: "Mammal",
     image: "/images/deer.jpg",
+    biome: "forest",
+    locations: [
+      { lat: 51.505, lon: -0.09 }, // London
+      { lat: 52.520, lon: 13.405 }, // Berlin
+    ],
   },
   {
     name: "Lion",
     diet: "Carnivore",
     species: "Mammal",
     image: "/images/lion.jpg",
+    biome: "savannah",
+    locations: [
+      { lat: -1.2921, lon: 36.8219 }, // Nairobi
+      { lat: -2.3333, lon: 34.8333 }, // Serengeti
+    ],
   },
   {
     name: "Iguana",
     diet: "Herbivore",
     species: "Reptile",
     image: "/images/iguana.jpg",
+    biome: "jungle",
+    locations: [
+      { lat: -6.2088, lon: 106.8456 }, // Jakarta
+      { lat: 10.4806, lon: -66.9036 }, // Caracas
+    ],
   },
   {
     name: "Tiger",
     diet: "Carnivore",
     species: "Mammal",
     image: "/images/tiger.jpg",
+    biome: "jungle",
+    locations: [
+      { lat: 22.5726, lon: 88.3639 }, // Kolkata
+      { lat: 23.8103, lon: 90.4125 }, // Dhaka
+    ],
   },
   {
     name: "Tortoise",
     diet: "Herbivore",
     species: "Reptile",
     image: "/images/tortoise.jpg",
+    biome: "desert",
+    locations: [
+      { lat: 25.6628, lon: 23.4162 }, // Sahara
+      { lat: 33.6844, lon: 73.0479 }, // Pakistan
+    ],
   },
   {
     name: "Elephant",
     diet: "Herbivore",
     species: "Mammal",
     image: "/images/elephant.jpg",
+    biome: "savannah",
+    locations: [
+      { lat: -1.9577, lon: 37.2972 }, // Kenya
+      { lat: 17.366, lon: 78.476 }, // India
+    ],
   },
   {
     name: "Wolf",
     diet: "Carnivore",
     species: "Mammal",
     image: "/images/wolf.jpg",
+    biome: "forest",
+    locations: [
+      { lat: 60.1699, lon: 24.9384 }, // Helsinki
+      { lat: 45.4215, lon: -75.6997 }, // Ottawa
+    ],
   },
   {
     name: "Rabbit",
     diet: "Herbivore",
     species: "Mammal",
     image: "/images/rabbit.jpg",
+    biome: "forest",
+    locations: [
+      { lat: 51.1657, lon: 10.4515 }, // Germany
+      { lat: 48.8566, lon: 2.3522 }, // Paris
+    ],
   },
   {
     name: "Crocodile",
     diet: "Carnivore",
     species: "Reptile",
     image: "/images/crocodile.jpg",
+    biome: "wetlands",
+    locations: [
+      { lat: 29.9511, lon: -90.0715 }, // Louisiana
+      { lat: -12.4634, lon: 130.8456 }, // Darwin, Australia
+    ],
   },
   {
     name: "Bear",
     diet: "Omnivore",
     species: "Mammal",
     image: "/images/bear.jpg",
+    biome: "forest",
+    locations: [
+      { lat: 61.5240, lon: 105.3188 }, // Russia
+      { lat: 64.2008, lon: -149.4937 }, // Alaska
+    ],
   },
 ];
 
@@ -95,6 +145,35 @@ function Home() {
     setLocation("");
     setAnimals(animalData);
   };
+
+  // Biome coordinates for map markers (example locations)
+  const biomeCoords = {
+    forest: { lon: -0.09, lat: 51.505 }, // London forest
+    savannah: { lon: 34.5085, lat: -1.2921 }, // Kenya savannah
+    jungle: { lon: 106.8456, lat: -6.2088 }, // Indonesia jungle
+    desert: { lon: 23.4162, lat: 25.6628 }, // Sahara
+    wetlands: { lon: -90.0715, lat: 29.9511 }, // Louisiana wetlands
+  };
+
+
+  // Gather all animal locations for the filtered list
+  const allLocations = animals.flatMap(animal => animal.locations || []);
+
+  // Calculate map bounding box to fit all markers, or use default
+  let bbox = "-0.09,51.505,-0.08,51.51";
+  if (allLocations.length > 0) {
+    const lats = allLocations.map(loc => loc.lat);
+    const lons = allLocations.map(loc => loc.lon);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLon = Math.min(...lons);
+    const maxLon = Math.max(...lons);
+    // Add a small margin
+    bbox = `${minLon-0.5},${minLat-0.5},${maxLon+0.5},${maxLat+0.5}`;
+  }
+
+  // Create marker string for all animal locations
+  const markerString = allLocations.map(loc => `&marker=${loc.lon},${loc.lat}`).join("");
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
@@ -198,19 +277,19 @@ function Home() {
           <section className="mb-12 p-8 bg-gray-900/70 rounded-lg shadow text-white flex flex-col items-center backdrop-blur-sm max-w-xl mx-auto">
             <h2 className="text-xl font-bold mb-4 text-center">Organisms Near You</h2>
             <div className="w-full flex justify-center mb-4">
-              {/* Simple map embed using OpenStreetMap, can be replaced with a real map API */}
+              {/* Map with biome marker */}
               <iframe
                 title="Nearby Organisms Map"
                 width="100%"
                 height="350"
                 className="rounded-lg border border-gray-800"
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=-0.09,51.505,-0.08,51.51&layer=mapnik`}
+                src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${markerString}`}
                 style={{ minWidth: '300px', maxWidth: '600px' }}
                 allowFullScreen
               ></iframe>
             </div>
             <p className="text-gray-300 text-center max-w-xl">
-              The map above shows the area around your location. In a real app, animals found nearby would be displayed here based on your address or GPS coordinates.
+              The map above now shows markers for each animal's location based on sample sighting data. In a real app, you could use real census or sighting datasets for more accuracy.
             </p>
           </section>
 
