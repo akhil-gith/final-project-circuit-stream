@@ -146,14 +146,7 @@ function Home() {
     setAnimals(animalData);
   };
 
-  // Biome coordinates for map markers (example locations)
-  const biomeCoords = {
-    forest: { lon: -0.09, lat: 51.505 }, // London forest
-    savannah: { lon: 34.5085, lat: -1.2921 }, // Kenya savannah
-    jungle: { lon: 106.8456, lat: -6.2088 }, // Indonesia jungle
-    desert: { lon: 23.4162, lat: 25.6628 }, // Sahara
-    wetlands: { lon: -90.0715, lat: 29.9511 }, // Louisiana wetlands
-  };
+
 
 
   // Gather all animal locations for the filtered list
