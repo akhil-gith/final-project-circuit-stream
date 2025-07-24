@@ -282,7 +282,7 @@ function Home() {
               ></iframe>
             </div>
             <p className="text-gray-300 text-center max-w-xl">
-              The map above now shows markers for each animal's location based on sample sighting data. In a real app, you could use real census or sighting datasets for more accuracy.
+              The map above now shows markers for each animal&apos;s location based on sample sighting data. In a real app, you could use real census or sighting datasets for more accuracy.
             </p>
           </section>
 
