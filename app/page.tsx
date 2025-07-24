@@ -272,18 +272,18 @@ function Home() {
             <h2 className="text-xl font-bold mb-6 text-center">Our Partners</h2>
             <div className="flex flex-wrap justify-center items-center gap-8">
               <div className="flex flex-col items-center">
-                <img src={withBasePath("/next.svg")}
-                  alt="Next.js" className="h-12 mb-2" />
+                <Image src={withBasePath("/next.svg")}
+                  alt="Next.js" width={48} height={48} className="h-12 w-auto mb-2" />
                 <span className="text-gray-300 text-sm">Next.js</span>
               </div>
               <div className="flex flex-col items-center">
-                <img src={withBasePath("/vercel.svg")}
-                  alt="Vercel" className="h-12 mb-2" />
+                <Image src={withBasePath("/vercel.svg")}
+                  alt="Vercel" width={48} height={48} className="h-12 w-auto mb-2" />
                 <span className="text-gray-300 text-sm">Vercel</span>
               </div>
               <div className="flex flex-col items-center">
-                <img src={withBasePath("/globe.svg")}
-                  alt="Globe" className="h-12 mb-2" />
+                <Image src={withBasePath("/globe.svg")}
+                  alt="Globe" width={48} height={48} className="h-12 w-auto mb-2" />
                 <span className="text-gray-300 text-sm">Globe</span>
               </div>
             </div>
