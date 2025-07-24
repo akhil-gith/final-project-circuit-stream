@@ -210,7 +210,7 @@ export default function HomePage() {
             <span>{user.name}</span>
             <span className="text-gray-400">{user.email}</span>
             <button
-              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+              className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200"
               onClick={() => setUser(null)}
             >
               Log Out
@@ -298,13 +298,15 @@ export default function HomePage() {
       <div className="flex flex-col items-center mb-12 z-10 relative">
         <h2 className="text-2xl font-bold mb-4">Animal Locations Map</h2>
         <div className="w-full max-w-3xl h-96 rounded-lg overflow-hidden shadow-lg border border-gray-700">
-          <iframe
-            title="Animal Map"
-            src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}${markerString}`}
-            className="w-full h-full"
-            style={{ border: 0 }}
-            allowFullScreen
-          />
+          <div className="w-full h-full rounded-2xl border-8 border-white border-opacity-30 bg-white bg-opacity-10 shadow-2xl" style={{boxShadow: '0 0 32px 8px rgba(255,255,255,0.2)'}}>
+            <iframe
+              title="Animal Map"
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}${markerString}`}
+              className="w-full h-full rounded-2xl"
+              style={{ border: 'none', background: 'transparent' }}
+              allowFullScreen
+            />
+          </div>
         </div>
       </div>
 
