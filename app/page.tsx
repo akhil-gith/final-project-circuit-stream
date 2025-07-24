@@ -185,20 +185,20 @@ function Home() {
           </section>
 
 
-          <div className="flex flex-row flex-wrap gap-6 justify-center">
+          <div className="flex flex-row flex-wrap gap-6 justify-center mb-12">
             {animals.length === 0 ? (
               <p className="text-white text-center">No animals found in this location.</p>
             ) : (
               animals.map(animal => (
                 <div
                   key={animal.name}
-                  className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-col items-center gap-6 backdrop-blur-sm w-[400px]"
+                  className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-row items-center gap-6 backdrop-blur-sm w-[400px]"
                 >
                   <Image
                     src={`/final-project-circuit-stream${animal.image}`}
                     alt={animal.name}
-                    width={300}
-                    height={200}
+                    width={140}
+                    height={100}
                     className="object-cover rounded"
                   />
                   <div className="flex flex-col gap-2">
