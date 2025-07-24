@@ -13,4 +13,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default {
+  output: "export",
+  images: { unoptimized: true },
+  basePath: "final-project-circuit-stream",
+}
