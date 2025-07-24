@@ -214,8 +214,8 @@ function Home() {
                       }>{animal.diet}</span>
                     </span>
                     <span>
-                      Species:{" "}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-center mb-12">
+                      Species: {" "}
+                      <span className={
                         animal.species === "Mammal"
                           ? "text-blue-300"
                           : "text-blue-400"
