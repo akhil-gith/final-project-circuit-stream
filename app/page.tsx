@@ -1,19 +1,6 @@
 
 "use client";
 
-// Utility function to prefix image sources for GitHub Pages
-function withBasePath(src: string): string {
-  // Detect if running on GitHub Pages (e.g., https://userid.github.io/repo-name)
-  if (typeof window !== 'undefined') {
-    const { hostname, pathname } = window.location;
-    // Check for github.io domain and repo path
-    const match = hostname.endsWith('github.io') && pathname.startsWith('/final-project-circuit-stream');
-    if (match && src.startsWith('/')) {
-      return `/final-project-circuit-stream${src}`;
-    }
-  }
-  return src;
-}
 
 import Image from "next/image";
 import { useState } from "react";
