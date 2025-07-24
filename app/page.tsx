@@ -5,7 +5,8 @@ import Image from "next/image";
 import { User as UserIcon } from "lucide-react";
 
 type Animal = {
-  name: string;
+  name: string; // Common name
+  scientificName?: string; // Scientific name
   diet?: string;
   species?: string;
   image?: string;
@@ -15,6 +16,7 @@ type Animal = {
 const animalData: Animal[] = [
   {
     name: "Deer",
+    scientificName: "Odocoileus virginianus",
     diet: "Herbivore",
     species: "Mammal",
     image: "/images/deer.jpg",
@@ -25,6 +27,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Lion",
+    scientificName: "Panthera leo",
     diet: "Carnivore",
     species: "Mammal",
     image: "/images/lion.jpg",
@@ -35,6 +38,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Iguana",
+    scientificName: "Iguana iguana",
     diet: "Herbivore",
     species: "Reptile",
     image: "/images/iguana.jpg",
@@ -45,6 +49,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Tiger",
+    scientificName: "Panthera tigris",
     diet: "Carnivore",
     species: "Mammal",
     image: "/images/tiger.jpg",
@@ -55,6 +60,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Tortoise",
+    scientificName: "Testudinidae",
     diet: "Herbivore",
     species: "Reptile",
     image: "/images/tortoise.jpg",
@@ -65,6 +71,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Elephant",
+    scientificName: "Loxodonta africana",
     diet: "Herbivore",
     species: "Mammal",
     image: "/images/elephant.jpg",
@@ -75,6 +82,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Wolf",
+    scientificName: "Canis lupus",
     diet: "Carnivore",
     species: "Mammal",
     image: "/images/wolf.jpg",
@@ -85,6 +93,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Rabbit",
+    scientificName: "Oryctolagus cuniculus",
     diet: "Herbivore",
     species: "Mammal",
     image: "/images/rabbit.jpg",
@@ -95,6 +104,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Crocodile",
+    scientificName: "Crocodylus niloticus",
     diet: "Carnivore",
     species: "Reptile",
     image: "/images/crocodile.jpg",
@@ -105,6 +115,7 @@ const animalData: Animal[] = [
   },
   {
     name: "Bear",
+    scientificName: "Ursus arctos",
     diet: "Omnivore",
     species: "Mammal",
     image: "/images/bear.jpg",
@@ -153,9 +164,17 @@ export default function HomePage() {
     setSightings(sightData.results || []);
     setLoading(false);
   }
-  // Only show animals present in sightings
-  const foundAnimalNames = new Set(sightings.map(s => s.taxon && s.taxon.name && s.taxon.name.toLowerCase()));
-  const filteredAnimals = animalData.filter(animal => foundAnimalNames.has(animal.name.toLowerCase()));
+  // Only show animals present in sightings (match by common or scientific name)
+  const foundNames = new Set(
+    sightings
+      .map(s => s.taxon && s.taxon.name && s.taxon.name.toLowerCase())
+      .filter(Boolean)
+  );
+  const filteredAnimals = animalData.filter(animal => {
+    const common = animal.name.toLowerCase();
+    const scientific = animal.scientificName ? animal.scientificName.toLowerCase() : "";
+    return foundNames.has(common) || foundNames.has(scientific);
+  });
   // Map markers for sightings
   const allLocations = sightings.map(s => ({ lat: s.geojson.coordinates[1], lon: s.geojson.coordinates[0] }));
   let bbox = "-0.09,51.505,-0.08,51.51";
