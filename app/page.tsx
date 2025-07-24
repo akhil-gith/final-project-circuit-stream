@@ -178,7 +178,7 @@ function Home() {
             </button>
           </div>
           {/* Map Section */}
-          <section className="mb-12 p-8 bg-gray-900 rounded-lg shadow text-white flex flex-col items-center">
+          <section className="mb-12 p-8 bg-gray-900/70 rounded-lg shadow text-white flex flex-col items-center backdrop-blur-sm">
             <h2 className="text-xl font-bold mb-4 text-center">Organisms Near You</h2>
             <div className="w-full flex justify-center mb-4">
               {/* Simple map embed using OpenStreetMap, can be replaced with a real map API */}
@@ -205,7 +205,7 @@ function Home() {
               animals.map(animal => (
                 <div
                   key={animal.name}
-                  className="bg-gray-800 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6"
+                  className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 backdrop-blur-sm"
                 >
                   <Image
                     src={withBasePath(animal.image)}
@@ -239,7 +239,7 @@ function Home() {
               ))
             )}
             {/* Lion Card with local image */}
-            <div className="bg-gray-800 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 mt-6">
+            <div className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 mt-6 backdrop-blur-sm">
               <Image
                 src={withBasePath("/images/download.jpg")}
                 alt="Lion"
@@ -260,7 +260,7 @@ function Home() {
           </div>
 
           {/* About Us Section */}
-          <section className="mt-12 mb-8 p-8 bg-gray-900 rounded-lg shadow text-white">
+          <section className="mt-12 mb-8 p-8 bg-gray-900/70 rounded-lg shadow text-white backdrop-blur-sm">
             <h2 className="text-xl font-bold mb-4 text-center">About Us</h2>
             <p className="text-center text-gray-300 max-w-2xl mx-auto">
               Animal Identifier is a project dedicated to helping people discover and learn about the wildlife in their local area. Our mission is to make animal information accessible and engaging for everyone, while promoting awareness and conservation.
@@ -268,7 +268,7 @@ function Home() {
           </section>
 
           {/* Companies Section */}
-          <section className="mb-8 p-8 bg-gray-900 rounded-lg shadow text-white">
+          <section className="mb-8 p-8 bg-gray-900/70 rounded-lg shadow text-white backdrop-blur-sm">
             <h2 className="text-xl font-bold mb-6 text-center">Our Partners</h2>
             <div className="flex flex-wrap justify-center items-center gap-8">
               <div className="flex flex-col items-center">
