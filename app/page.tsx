@@ -183,7 +183,10 @@ function Home() {
       const filtered = animalsWithDistance
         .filter(animal => animal.minDist <= RADIUS_KM)
         .sort((a, b) => a.minDist - b.minDist)
-        .map(({ minDist, ...rest }) => rest);
+        .map(animal => {
+          const { minDist, ...rest } = animal;
+          return rest;
+        });
       setAnimals(filtered.length ? filtered : []);
     } else {
       setAnimals([]);
