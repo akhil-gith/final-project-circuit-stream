@@ -170,23 +170,20 @@ function Home() {
       // 8 miles = 12.87 km
       const RADIUS_KM = 12.87;
       // Find animals with any location within 8 miles, and sort by closest distance
-      const animalsWithDistance = animalData.map(animal => {
-        let minDist = Infinity;
-        if (animal.locations) {
-          for (const loc of animal.locations) {
-            const dist = haversine(lat, lon, loc.lat, loc.lon);
-            if (dist < minDist) minDist = dist;
-          }
-        }
-        return { ...animal, minDist };
-      });
-      const filtered = animalsWithDistance
-        .filter(animal => animal.minDist <= RADIUS_KM)
-        .sort((a, b) => a.minDist - b.minDist)
+      const filtered = animalData
         .map(animal => {
-          const { minDist, ...rest } = animal;
-          return rest;
-        });
+          let minDist = Infinity;
+          if (animal.locations) {
+            for (const loc of animal.locations) {
+              const dist = haversine(lat, lon, loc.lat, loc.lon);
+              if (dist < minDist) minDist = dist;
+            }
+          }
+          return { animal, minDist };
+        })
+        .filter(({ minDist }) => minDist <= RADIUS_KM)
+        .sort((a, b) => a.minDist - b.minDist)
+        .map(({ animal }) => animal);
       setAnimals(filtered.length ? filtered : []);
     } else {
       setAnimals([]);
