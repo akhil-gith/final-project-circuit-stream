@@ -41,6 +41,36 @@ const animalData = [
     species: "Reptile",
     image: "/images/tortoise.jpg",
   },
+  {
+    name: "Elephant",
+    diet: "Herbivore",
+    species: "Mammal",
+    image: "/images/elephant.jpg",
+  },
+  {
+    name: "Wolf",
+    diet: "Carnivore",
+    species: "Mammal",
+    image: "/images/wolf.jpg",
+  },
+  {
+    name: "Rabbit",
+    diet: "Herbivore",
+    species: "Mammal",
+    image: "/images/rabbit.jpg",
+  },
+  {
+    name: "Crocodile",
+    diet: "Carnivore",
+    species: "Reptile",
+    image: "/images/crocodile.jpg",
+  },
+  {
+    name: "Bear",
+    diet: "Omnivore",
+    species: "Mammal",
+    image: "/images/bear.jpg",
+  },
 ];
 
 
@@ -185,26 +215,26 @@ function Home() {
           </section>
 
 
-          <div className="flex flex-row flex-wrap gap-6 justify-center mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 justify-center mb-12">
             {animals.length === 0 ? (
               <p className="text-white text-center">No animals found in this location.</p>
             ) : (
               animals.map(animal => (
                 <div
                   key={animal.name}
-                  className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-row items-center gap-6 backdrop-blur-sm w-[400px]"
+                  className="bg-gray-800/70 rounded-lg shadow-xl p-8 flex flex-col items-start gap-6 backdrop-blur-sm min-w-[340px] max-w-[420px] mx-auto"
                 >
                   <Image
                     src={`/final-project-circuit-stream${animal.image}`}
                     alt={animal.name}
-                    width={140}
-                    height={100}
-                    className="object-cover rounded"
+                    width={380}
+                    height={260}
+                    className="object-cover rounded w-full"
                   />
-                  <div className="flex flex-col gap-2">
-                    <span className="text-lg font-bold">{animal.name}</span>
+                  <div className="flex flex-col gap-2 w-full">
+                    <span className="text-2xl font-bold">{animal.name}</span>
                     <span>
-                      Diet:{" "}
+                      Diet: {" "}
                       <span className={
                         animal.diet === "Carnivore"
                           ? "text-red-400"
