@@ -117,12 +117,44 @@ const animalData: Animal[] = [
 export default function HomePage() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
-  const [search, setSearch] = useState("");
-  // Map center and markers
-  const allLocations = animalData.flatMap(animal => animal.locations || []);
-  // Default bounding box for map
+  const [location, setLocation] = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [sightings, setSightings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  // Geocode location and fetch sightings
+  async function handleLocationSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!location) return;
+    setLoading(true);
+    // Geocode location
+    const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
+    const geoData = await geoRes.json();
+    if (!geoData[0]) {
+      setCoords(null);
+      setSightings([]);
+      setLoading(false);
+      return;
+    }
+    const lat = parseFloat(geoData[0].lat);
+    const lon = parseFloat(geoData[0].lon);
+    setCoords({ lat, lon });
+    // Fetch animal sightings from iNaturalist within 8 miles (12.87 km)
+    const radiusKm = 12.87;
+    const apiUrl = `https://api.inaturalist.org/v1/observations?lat=${lat}&lng=${lon}&radius=${radiusKm}&per_page=50&order=desc&order_by=created_at&verifiable=true&photos=true`;
+    const sightRes = await fetch(apiUrl);
+    const sightData = await sightRes.json();
+    setSightings(sightData.results || []);
+    setLoading(false);
+  }
+  // Only show animals present in sightings
+  const foundAnimalNames = new Set(sightings.map(s => s.taxon && s.taxon.name && s.taxon.name.toLowerCase()));
+  const filteredAnimals = animalData.filter(animal => foundAnimalNames.has(animal.name.toLowerCase()));
+  // Map markers for sightings
+  const allLocations = sightings.map(s => ({ lat: s.geojson.coordinates[1], lon: s.geojson.coordinates[0] }));
   let bbox = "-0.09,51.505,-0.08,51.51";
-  if (allLocations.length > 0) {
+  if (coords) {
+    bbox = `${coords.lon-0.1},${coords.lat-0.1},${coords.lon+0.1},${coords.lat+0.1}`;
+  } else if (allLocations.length > 0) {
     const lats = allLocations.map(loc => loc.lat);
     const lons = allLocations.map(loc => loc.lon);
     const minLat = Math.min(...lats);
@@ -131,15 +163,7 @@ export default function HomePage() {
     const maxLon = Math.max(...lons);
     bbox = `${minLon-0.5},${minLat-0.5},${maxLon+0.5},${maxLat+0.5}`;
   }
-  const markerString = allLocations.map(loc => `&marker=${loc.lon},${loc.lat}`).join("");
-  // Filter animals by search
-  const filteredAnimals = animalData.filter(animal => {
-    const term = search.toLowerCase();
-    return (
-      animal.name.toLowerCase().includes(term) ||
-      (animal.species && animal.species.toLowerCase().includes(term))
-    );
-  });
+  const markerString = allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).join("");
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
@@ -280,15 +304,27 @@ export default function HomePage() {
       {/* Animal Explorer Section */}
       <div className="flex flex-col items-center mt-8 mb-16 z-10 relative">
         <h1 className="text-3xl font-bold mb-6">Animal Explorer</h1>
-        {/* Search Bar */}
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search animals by name or species..."
-          className="mb-6 px-4 py-2 rounded w-full max-w-md bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
-        />
+        {/* Location Search Bar */}
+        <form onSubmit={handleLocationSearch} className="flex flex-col items-center w-full max-w-md mb-6">
+          <input
+            type="text"
+            value={location}
+            onChange={e => setLocation(e.target.value)}
+            placeholder="Enter your location (city, address, etc.)"
+            className="px-4 py-2 rounded w-full bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-blue-500 mb-2"
+            required
+          />
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600" disabled={loading}>
+            {loading ? "Searching..." : "Find Animals Near Me"}
+          </button>
+        </form>
+        {coords && (
+          <p className="text-gray-400 mb-4">Showing animals within 8 miles of <span className="font-semibold">{location}</span></p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredAnimals.length === 0 && coords && !loading && (
+            <p className="text-gray-400 col-span-3">No animals found within 8 miles of this location.</p>
+          )}
           {filteredAnimals.map(animal => (
             <div key={animal.name} className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center">
               <div className="w-32 h-32 mb-4 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
