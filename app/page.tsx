@@ -57,9 +57,11 @@ const animalData = [
 ];
 
 
+
 function Home() {
   const [location, setLocation] = useState("");
   const [animals, setAnimals] = useState(animalData);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleFindAnimals = () => {
     const query = location.toLowerCase();
@@ -96,27 +98,35 @@ function Home() {
       <div className="relative z-10">
       <header className="sticky top-0 bg-gray-900 z-50 border-b border-gray-800">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-0 sm:p-4 gap-0 sm:gap-4">
-          {/* Mobile vertical menu */}
-          <div className="flex flex-row sm:flex-row w-full">
-            <div className="flex flex-col sm:flex-row w-full">
-              <div className="flex items-center gap-2 p-4 sm:p-0 sm:gap-6 sm:text-xl font-bold" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
-                <HomeIcon className="w-6 h-6" />
-                <span>Animal App</span>
-              </div>
-              <nav className="flex flex-col sm:flex-row w-full sm:w-auto text-sm p-4 sm:p-0 bg-gray-900 sm:bg-transparent border-b border-gray-800 sm:border-none sm:justify-evenly" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
-                <button className="flex-1 flex items-center justify-center gap-2 hover:text-blue-400 py-2 sm:py-0">
-                  <HomeIcon className="w-4 h-4" />
-                  Home
-                </button>
-                <button className="flex-1 flex items-center justify-center gap-2 hover:text-blue-400 py-2 sm:py-0">
-                  <SearchIcon className="w-4 h-4" />
-                  Search
-                </button>
-                <button className="flex-1 flex items-center justify-center gap-2 hover:text-blue-400 py-2 sm:py-0">
-                  <UserIcon className="w-4 h-4" />
-                  Profile
-                </button>
-              </nav>
+          <div className="flex flex-row w-full items-center justify-between">
+            <div className="flex items-center gap-2 p-4 sm:p-0 sm:gap-6 sm:text-xl font-bold" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
+              <HomeIcon className="w-6 h-6" />
+              <span>Animal App</span>
+            </div>
+            {/* Dropdown Menu Button */}
+            <div className="relative">
+              <button
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-haspopup="true"
+                aria-expanded={menuOpen}
+              >
+                <span className="hidden sm:inline">Menu</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded shadow-lg z-50 animate-fade-in">
+                  <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-800 text-left" onClick={() => setMenuOpen(false)}>
+                    <HomeIcon className="w-4 h-4" /> Home
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-800 text-left" onClick={() => setMenuOpen(false)}>
+                    <SearchIcon className="w-4 h-4" /> Search
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-800 text-left" onClick={() => setMenuOpen(false)}>
+                    <UserIcon className="w-4 h-4" /> Profile
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-4 p-4 sm:p-0">
               {/* Auth buttons removed for static export */}
