@@ -96,7 +96,7 @@ function Home() {
       {/* Top Navigation Bar with Horizontal Menu */}
       {/* Content overlay to ensure text is readable over video */}
       <div className="relative z-10">
-      <header className="sticky top-0 bg-gray-900 z-50 border-b border-gray-800">
+      <header className="sticky top-0 bg-gray-900/60 backdrop-blur-sm z-50 border-b border-gray-800">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-0 sm:p-4 gap-0 sm:gap-4">
           <div className="flex flex-row w-full items-center justify-between">
             <div className="flex items-center gap-2 p-4 sm:p-0 sm:gap-6 sm:text-xl font-bold" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
