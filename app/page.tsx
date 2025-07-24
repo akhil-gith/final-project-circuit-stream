@@ -1,6 +1,19 @@
 
 "use client";
 
+// Utility function to prefix image sources for GitHub Pages
+function withBasePath(src: string): string {
+  // Detect if running on GitHub Pages (e.g., https://userid.github.io/repo-name)
+  if (typeof window !== 'undefined') {
+    const { hostname, pathname } = window.location;
+    // Check for github.io domain and repo path
+    const match = hostname.endsWith('github.io') && pathname.startsWith('/final-project-circuit-stream');
+    if (match && src.startsWith('/')) {
+      return `/final-project-circuit-stream${src}`;
+    }
+  }
+  return src;
+}
 
 import Image from "next/image";
 import { useState } from "react";
@@ -225,6 +238,25 @@ function Home() {
                 </div>
               ))
             )}
+            {/* Lion Card with local image */}
+            <div className="bg-gray-800/70 rounded-lg shadow p-6 flex flex-col sm:flex-row items-center gap-6 mt-6 backdrop-blur-sm">
+              <Image
+                src={"/final-project-circuit-stream/images/download.jpg"}
+                alt="Lion"
+                width={300}
+                height={200}
+                className="object-cover rounded"
+              />
+              <div className="flex flex-col gap-2">
+                <span className="text-lg font-bold">Lion</span>
+                <span>
+                  Diet: <span className="text-red-400">Carnivore</span>
+                </span>
+                <span>
+                  Species: <span className="text-blue-300">Mammal</span>
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* About Us Section */}
