@@ -11,118 +11,16 @@ import {
 } from "lucide-react";
 
 // animalData will be filled from API
-const animalData: any[] = [];
-  {
-    name: "Deer",
-    diet: "Herbivore",
-    species: "Mammal",
-    image: "/images/deer.jpg",
-    biome: "forest",
-    locations: [
-      { lat: 51.505, lon: -0.09 }, // London
-      { lat: 52.520, lon: 13.405 }, // Berlin
-    ],
-  },
-  {
-    name: "Lion",
-    diet: "Carnivore",
-    species: "Mammal",
-    image: "/images/lion.jpg",
-    biome: "savannah",
-    locations: [
-      { lat: -1.2921, lon: 36.8219 }, // Nairobi
-      { lat: -2.3333, lon: 34.8333 }, // Serengeti
-    ],
-  },
-  {
-    name: "Iguana",
-    diet: "Herbivore",
-    species: "Reptile",
-    image: "/images/iguana.jpg",
-    biome: "jungle",
-    locations: [
-      { lat: -6.2088, lon: 106.8456 }, // Jakarta
-      { lat: 10.4806, lon: -66.9036 }, // Caracas
-    ],
-  },
-  {
-    name: "Tiger",
-    diet: "Carnivore",
-    species: "Mammal",
-    image: "/images/tiger.jpg",
-    biome: "jungle",
-    locations: [
-      { lat: 22.5726, lon: 88.3639 }, // Kolkata
-      { lat: 23.8103, lon: 90.4125 }, // Dhaka
-    ],
-  },
-  {
-    name: "Tortoise",
-    diet: "Herbivore",
-    species: "Reptile",
-    image: "/images/tortoise.jpg",
-    biome: "desert",
-    locations: [
-      { lat: 25.6628, lon: 23.4162 }, // Sahara
-      { lat: 33.6844, lon: 73.0479 }, // Pakistan
-    ],
-  },
-  {
-    name: "Elephant",
-    diet: "Herbivore",
-    species: "Mammal",
-    image: "/images/elephant.jpg",
-    biome: "savannah",
-    locations: [
-      { lat: -1.9577, lon: 37.2972 }, // Kenya
-      { lat: 17.366, lon: 78.476 }, // India
-    ],
-  },
-  {
-    name: "Wolf",
-    diet: "Carnivore",
-    species: "Mammal",
-    image: "/images/wolf.jpg",
-    biome: "forest",
-    locations: [
-      { lat: 60.1699, lon: 24.9384 }, // Helsinki
-      { lat: 45.4215, lon: -75.6997 }, // Ottawa
-    ],
-  },
-  {
-    name: "Rabbit",
-    diet: "Herbivore",
-    species: "Mammal",
-    image: "/images/rabbit.jpg",
-    biome: "forest",
-    locations: [
-      { lat: 51.1657, lon: 10.4515 }, // Germany
-      { lat: 48.8566, lon: 2.3522 }, // Paris
-    ],
-  },
-  {
-    name: "Crocodile",
-    diet: "Carnivore",
-    species: "Reptile",
-    image: "/images/crocodile.jpg",
-    biome: "wetlands",
-    locations: [
-      { lat: 29.9511, lon: -90.0715 }, // Louisiana
-      { lat: -12.4634, lon: 130.8456 }, // Darwin, Australia
-    ],
-  },
-  {
-    name: "Bear",
-    diet: "Omnivore",
-    species: "Mammal",
-    image: "/images/bear.jpg",
-    biome: "forest",
-    locations: [
-      { lat: 61.5240, lon: 105.3188 }, // Russia
-      { lat: 64.2008, lon: -149.4937 }, // Alaska
-    ],
-  },
-];
+type Animal = {
+  name: string;
+  diet?: string;
+  species?: string;
+  image?: string;
+  locations?: { lat: number; lon: number }[];
+  sightings?: { lat: number; lon: number; lastSeen: string }[];
+};
+
+const animalData: Animal[] = [];
 
 
 
@@ -142,8 +40,8 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 
 function Home() {
   const [location, setLocation] = useState("");
-  const [animals, setAnimals] = useState<any[]>([]);
-  const [sightings, setSightings] = useState<any[]>([]); // {lat, lon, name, lastSeen}
+  const [animals, setAnimals] = useState<Animal[]>([]);
+  // Removed unused sightings state
   const [menuOpen, setMenuOpen] = useState(false);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lon: number } | null>(null); // {lat, lon}
 
@@ -351,33 +249,38 @@ function Home() {
                   key={animal.name}
                   className="bg-gray-800/70 rounded-lg shadow-xl p-8 flex flex-col items-start gap-6 backdrop-blur-sm min-w-[340px] max-w-[420px] mx-auto"
                 >
-                  <Image
-                    src={`/final-project-circuit-stream${animal.image}`}
-                    alt={animal.name}
-                    width={380}
-                    height={260}
-                    className="object-cover rounded w-full"
-                  />
+                  {animal.image ? (
+                    <Image
+                      src={animal.image.startsWith("/images/") ? `/final-project-circuit-stream${animal.image}` : animal.image}
+                      alt={animal.name}
+                      width={380}
+                      height={260}
+                      className="object-cover rounded w-full"
+                    />
+                  ) : (
+                    <div className="w-full h-[260px] bg-gray-700 rounded flex items-center justify-center text-gray-400">No image</div>
+                  )}
                   <div className="flex flex-col gap-2 w-full">
                     <span className="text-2xl font-bold">{animal.name}</span>
                     <span>
-                      Diet: {" "}
-                      <span className={
+                      Diet: <span className={
                         animal.diet === "Carnivore"
                           ? "text-red-400"
                           : animal.diet === "Herbivore"
                           ? "text-green-400"
                           : "text-yellow-400"
-                      }>{animal.diet}</span>
+                      }>{animal.diet || "Unknown"}</span>
                     </span>
                     <span>
-                      Species: {" "}
-                      <span className={
+                      Species: <span className={
                         animal.species === "Mammal"
                           ? "text-blue-300"
                           : "text-blue-400"
-                      }>{animal.species}</span>
+                      }>{animal.species || "Unknown"}</span>
                     </span>
+                    {animal.sightings && (
+                      <span className="text-sm text-gray-400">Sightings: {animal.sightings.length}</span>
+                    )}
                   </div>
                 </div>
               ))
