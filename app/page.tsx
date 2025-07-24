@@ -141,7 +141,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 
 function Home() {
   const [location, setLocation] = useState("");
-  const [animals, setAnimals] = useState<Animal[]>([]);
+  const [animals, setAnimals] = useState<Animal[]>(animalData);
   // Removed unused sightings state
   const [menuOpen, setMenuOpen] = useState(false);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lon: number } | null>(null); // {lat, lon}
