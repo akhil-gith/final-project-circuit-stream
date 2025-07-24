@@ -167,10 +167,23 @@ function Home() {
     }
     if (lat !== null && lon !== null) {
       setMapCenter({ lat, lon });
-      // Find animals with any location within 500km
-      const filtered = animalData.filter(animal =>
-        animal.locations && animal.locations.some(loc => haversine(lat, lon, loc.lat, loc.lon) <= 500)
-      );
+      // 8 miles = 12.87 km
+      const RADIUS_KM = 12.87;
+      // Find animals with any location within 8 miles, and sort by closest distance
+      const animalsWithDistance = animalData.map(animal => {
+        let minDist = Infinity;
+        if (animal.locations) {
+          for (const loc of animal.locations) {
+            const dist = haversine(lat, lon, loc.lat, loc.lon);
+            if (dist < minDist) minDist = dist;
+          }
+        }
+        return { ...animal, minDist };
+      });
+      const filtered = animalsWithDistance
+        .filter(animal => animal.minDist <= RADIUS_KM)
+        .sort((a, b) => a.minDist - b.minDist)
+        .map(({ minDist, ...rest }) => rest);
       setAnimals(filtered.length ? filtered : []);
     } else {
       setAnimals([]);
