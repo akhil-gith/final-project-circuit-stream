@@ -118,9 +118,36 @@ const animalData: Animal[] = [
 export default function HomePage() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
+  // Map center and markers
+  const allLocations = animalData.flatMap(animal => animal.locations || []);
+  // Default bounding box for map
+  let bbox = "-0.09,51.505,-0.08,51.51";
+  if (allLocations.length > 0) {
+    const lats = allLocations.map(loc => loc.lat);
+    const lons = allLocations.map(loc => loc.lon);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLon = Math.min(...lons);
+    const maxLon = Math.max(...lons);
+    bbox = `${minLon-0.5},${minLat-0.5},${maxLon+0.5},${maxLat+0.5}`;
+  }
+  const markerString = allLocations.map(loc => `&marker=${loc.lon},${loc.lat}`).join("");
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
+      {/* Jungle Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed top-0 left-0 w-full h-full object-cover z-0"
+        style={{ pointerEvents: 'none' }}
+      >
+        <source src="/final-project-circuit-stream/videos/jungle.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+
       {/* Top bar with Login/Signup or Profile */}
       <div className="w-full flex justify-end items-center p-4 z-10 relative">
         {!user ? (
@@ -220,8 +247,30 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* About Section */}
+      <div className="flex flex-col items-center mt-8 mb-8 z-10 relative">
+        <h2 className="text-2xl font-bold mb-2">About Animal Explorer</h2>
+        <p className="text-gray-300 max-w-xl text-center">
+          Animal Explorer helps you discover animals around the world, learn about their habitats, and see where they live. Sign up to save your favorite animals and get updates on sightings!
+        </p>
+      </div>
+
+      {/* Map Section */}
+      <div className="flex flex-col items-center mb-12 z-10 relative">
+        <h2 className="text-2xl font-bold mb-4">Animal Locations Map</h2>
+        <div className="w-full max-w-3xl h-96 rounded-lg overflow-hidden shadow-lg border border-gray-700">
+          <iframe
+            title="Animal Map"
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}${markerString}`}
+            className="w-full h-full"
+            style={{ border: 0 }}
+            allowFullScreen
+          />
+        </div>
+      </div>
+
       {/* Animal Explorer Section */}
-      <div className="flex flex-col items-center mt-16">
+      <div className="flex flex-col items-center mt-8 mb-16 z-10 relative">
         <h1 className="text-3xl font-bold mb-6">Animal Explorer</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {animalData.map(animal => (
