@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { User as UserIcon } from "lucide-react";
 
 type Animal = {
@@ -122,7 +123,8 @@ export default function HomePage() {
   type Sighting = {
     geojson: { coordinates: [number, number] };
     taxon?: { name?: string };
-    [key: string]: any;
+    // Add more fields as needed, but avoid 'any'
+    // For now, only use known fields
   };
   const [sightings, setSightings] = useState<Sighting[]>([]);
   const [loading, setLoading] = useState(false);
