@@ -368,8 +368,12 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white text-black rounded-lg p-8 min-w-[350px] relative flex flex-col items-center animate-fadein">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
-              onClick={() => setShowSettings(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
+              onClick={e => {
+                e.currentTarget.classList.add('animate-press');
+                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                setShowSettings(false);
+              }}
             >×</button>
             <h2 className="text-xl font-bold mb-4">Settings</h2>
             <form
@@ -436,8 +440,12 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-lg w-full relative animate-fadein">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
-              onClick={() => setShowHelp(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
+              onClick={e => {
+                e.currentTarget.classList.add('animate-press');
+                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                setShowHelp(false);
+              }}
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-center">How to Use Animal Explorer</h2>
             <ol className="list-decimal list-inside text-left text-base mb-4">
@@ -458,8 +466,12 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-lg w-full relative animate-fadein">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
-              onClick={() => setShowFeedback(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
+              onClick={e => {
+                e.currentTarget.classList.add('animate-press');
+                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                setShowFeedback(false);
+              }}
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-center">Send Feedback</h2>
             <form
@@ -491,8 +503,8 @@ export default function HomePage() {
 
       {/* About Section */}
       <div className="flex flex-col items-center mt-8 mb-8 z-10 relative">
-        <h2 className="text-2xl font-bold mb-2">About Animal Explorer</h2>
-        <p className="text-gray-300 max-w-xl text-center">
+        <h2 className="text-2xl font-bold mb-2 text-white drop-shadow-lg md:text-3xl lg:text-4xl">About Animal Explorer</h2>
+        <p className="max-w-xl text-center text-white text-base md:text-lg lg:text-xl drop-shadow-md bg-gradient-to-r from-blue-900 via-purple-900 to-gray-900 bg-clip-text">
           Animal Explorer helps you discover animals around the world, learn about their habitats, and see where they live. Sign up to save your favorite animals and get updates on sightings!
         </p>
       </div>
@@ -633,8 +645,12 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className="bg-white bg-opacity-90 rounded-xl shadow-2xl p-10 max-w-lg w-full relative flex flex-col items-center animate-fadein">
             <button
-              className="absolute top-4 right-4 text-gray-600 hover:text-black text-2xl font-bold"
-              onClick={() => setSelectedAnimal(null)}
+              className="absolute top-4 right-4 text-gray-600 hover:text-black text-2xl font-bold active:animate-press"
+              onClick={e => {
+                e.currentTarget.classList.add('animate-press');
+                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                setSelectedAnimal(null);
+              }}
             >
               ×
             </button>
@@ -790,6 +806,27 @@ export default function HomePage() {
           0% { transform: scale(1); }
           50% { transform: scale(0.92); }
           100% { transform: scale(1); }
+        }
+        /* Responsive button styles */
+        button, .responsive-btn {
+          font-size: 1rem;
+          padding: 0.75rem 1.25rem;
+          border-radius: 0.5rem;
+          transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+        }
+        @media (max-width: 640px) {
+          button, .responsive-btn {
+            font-size: 0.95rem;
+            padding: 0.65rem 1rem;
+            border-radius: 0.45rem;
+          }
+        }
+        @media (max-width: 480px) {
+          button, .responsive-btn {
+            font-size: 0.9rem;
+            padding: 0.55rem 0.8rem;
+            border-radius: 0.4rem;
+          }
         }
       `}</style>
     </div>
