@@ -455,6 +455,7 @@ export default function HomePage() {
                 className="absolute top-0 left-0 w-full h-full object-cover rounded-2xl"
                 style={{ border: 'none', background: 'transparent' }}
                 priority
+                unoptimized
               />
             </div>
           </div>
