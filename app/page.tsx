@@ -202,7 +202,8 @@ export default function HomePage() {
           </button>
         </div>
         <div className="flex flex-col items-end mr-4 gap-2 pointer-events-auto">
-  // State for Add Animal feature
+          {/* ...existing code... */}
+  // State for Add Animal feature (ensure at top level)
   const [showAddAnimal, setShowAddAnimal] = useState(false);
   const [addAnimalInput, setAddAnimalInput] = useState("");
   const [addAnimalCard, setAddAnimalCard] = useState<null | { name: string; sciName: string; desc: string; imageUrl: string }>(null);
