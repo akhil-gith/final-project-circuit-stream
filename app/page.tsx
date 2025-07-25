@@ -150,19 +150,24 @@ export default function HomePage() {
   const filteredAnimals = sightings;
   // Map markers for sightings
   const allLocations = sightings.map(s => ({ lat: s.geojson.coordinates[1], lon: s.geojson.coordinates[0] }));
-  let bbox = "-0.09,51.505,-0.08,51.51";
-  if (coords) {
-    bbox = `${coords.lon-0.1},${coords.lat-0.1},${coords.lon+0.1},${coords.lat+0.1}`;
-  } else if (allLocations.length > 0) {
-    const lats = allLocations.map(loc => loc.lat);
-    const lons = allLocations.map(loc => loc.lon);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLon = Math.min(...lons);
-    const maxLon = Math.max(...lons);
-    bbox = `${minLon-0.5},${minLat-0.5},${maxLon+0.5},${maxLat+0.5}`;
-  }
-  const markerString = allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).join("");
+let bbox = "-0.09,51.505,-0.08,51.51";
+if (coords) {
+  bbox = `${coords.lon-0.1},${coords.lat-0.1},${coords.lon+0.1},${coords.lat+0.1}`;
+} else if (allLocations.length > 0) {
+  const lats = allLocations.map(loc => loc.lat);
+  const lons = allLocations.map(loc => loc.lon);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons);
+  const maxLon = Math.max(...lons);
+  bbox = `${minLon-0.5},${minLat-0.5},${maxLon+0.5},${maxLat+0.5}`;
+}
+// Marker string: blue for user, red for animals
+let markerString = "";
+if (coords) {
+  markerString += `&marker=${coords.lon},${coords.lat},blue`;
+}
+markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).join("");
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
@@ -464,6 +469,17 @@ export default function HomePage() {
               style={{ border: 'none', background: 'transparent' }}
               allowFullScreen
             />
+          </div>
+        </div>
+        {/* Map Key/Legend */}
+        <div className="flex items-center gap-6 mt-4 bg-black bg-opacity-40 rounded-lg px-6 py-3 shadow-lg text-white text-base font-semibold">
+          <div className="flex items-center gap-2">
+            <span style={{display: 'inline-block', width: 18, height: 18, background: 'blue', borderRadius: '50%', border: '2px solid #fff'}}></span>
+            <span>User Location</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span style={{display: 'inline-block', width: 18, height: 18, background: 'red', borderRadius: '50%', border: '2px solid #fff'}}></span>
+            <span>Animal Location</span>
           </div>
         </div>
       </div>
