@@ -510,11 +510,37 @@ export default function HomePage() {
         <p className="max-w-xl text-center text-white text-base md:text-lg lg:text-xl drop-shadow-md bg-gradient-to-r from-blue-900 via-purple-900 to-gray-900 bg-clip-text">
           Animal Explorer helps you discover animals around the world, learn about their habitats, and see where they live. Sign up to save your favorite animals and get updates on sightings!
         </p>
+        <div className="max-w-xl mt-4 text-center text-white text-base md:text-lg lg:text-xl drop-shadow-md bg-gradient-to-r from-gray-900 via-purple-900 to-blue-900 bg-clip-text px-2 py-3 rounded-lg" style={{background: 'rgba(30,30,60,0.7)'}}>
+          <span className="font-semibold text-yellow-300">Why I made this app:</span><br />
+          The reason I have made this app was a long story. It all stems from my experience at a local AirBnB in the woods. There was a bear and my grandmother happened to be the closest one to it. Of course, it would have been nice to have a warning, thus the reason for this app.<br /><br />
+          <span className="font-semibold text-green-300">Thank you!</span> And thank you so much for visiting my app, and if you have any questions or feedback, please fill out the feedback form and I will come back to you.
+        </div>
       </div>
 
-      {/* ...existing code... */}
-
-      {/* ...existing code... */}
+      {/* Map Section */}
+      {coords && (
+        <div className="flex flex-col items-center w-full mb-8 z-10 relative">
+          <div className="relative w-full max-w-2xl mx-auto rounded-lg overflow-hidden shadow-lg border-2 border-blue-400 bg-white bg-opacity-80">
+            <img
+              src={`https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${coords.lon},${coords.lat}&z=10&l=map&size=650,350&pt=${coords.lon},${coords.lat},pm2rdm`}
+              alt="Map of location"
+              className="w-full h-72 object-cover"
+              style={{ minHeight: '280px', background: '#e0e7ef' }}
+            />
+            {/* Map Legend */}
+            <div className="absolute bottom-2 left-2 bg-white bg-opacity-90 rounded px-4 py-2 shadow text-sm flex flex-col gap-1 border border-gray-300">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 rounded-full bg-red-600 border-2 border-white"></span>
+                <span>Search Center</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></span>
+                <span>Animal Sighting</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Animal Explorer Section */}
       <div className="flex flex-col items-center mt-8 mb-16 z-10 relative">
@@ -545,104 +571,127 @@ export default function HomePage() {
           {filteredAnimals.length === 0 && coords && !loading && (
             <p className="text-gray-400 col-span-3">No animals found within 8 miles of this location.</p>
           )}
-          {filteredAnimals.map((animal, idx) => {
-            // Type guards for iNaturalist, eBird, GBIF
-            let imageUrl = "";
-            if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0 && animal.photos[0].url) {
-              imageUrl = animal.photos[0].url.replace("square.", "medium.");
-            }
-            let name = "Unknown";
-            let sciName = "";
-            let desc = "";
-            if ('taxon' in animal && animal.taxon) {
-              const taxon = animal.taxon as INatTaxonFull;
-              name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
-                ? taxon.preferred_common_name
-                : taxon.name || "Unknown";
-              sciName = taxon.name || "";
-              desc = typeof taxon.wikipedia_summary === 'string' ? taxon.wikipedia_summary : "";
-            } else if ('ebirdCommon' in animal) {
-              name = animal.ebirdCommon || "Unknown";
-              sciName = 'sciName' in animal ? animal.sciName || "" : "";
-            } else if ('comName' in animal || 'sciName' in animal) {
-              name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
-              sciName = 'sciName' in animal ? animal.sciName || "" : "";
-            } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
-              name = animal.gbifSpecies || "Unknown";
-              sciName = animal.gbifScientific || "";
-              desc = [
-                animal.gbifClass,
-                animal.gbifOrder,
-                animal.gbifFamily,
-                animal.gbifGenus
-              ].filter(Boolean).join(", ");
-            }
-            // Title case for animal name
-            function toTitleCase(str: string) {
-              return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-            }
-            name = toTitleCase(name);
-            // Danger/poison keyword check
-            const dangerKeywords = [
-              "poison", "venom", "danger", "toxic", "bite", "sting", "attack", "aggressive", "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish", "mosquito", "wasp", "bee", "ant", "centipede", "millipede", "lethal", "predator", "disease", "infection", "injury"
-            ];
-            const lowerName = name.toLowerCase();
-            const lowerSci = sciName.toLowerCase();
-            const lowerDesc = desc.toLowerCase();
-            const isDangerous = dangerKeywords.some(kw => lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw));
-            // Rarity estimation
-            let rarity: 'common' | 'rare' = 'common';
-            if (lowerName.includes('rare') || lowerDesc.includes('rare') || lowerDesc.includes('endangered') || lowerDesc.includes('threatened')) {
-              rarity = 'rare';
-            }
-            // Generate a varied, paragraph-style description of at least 10 lines
-            let fullDesc = desc;
-            if (!fullDesc || fullDesc.split('.').length < 10) {
-              const lines: string[] = [];
-              lines.push(`${name} (${sciName}) is a fascinating animal species.`);
-              lines.push(`It is commonly found in various habitats and regions.`);
-              lines.push(`The scientific name for this animal is ${sciName}.`);
-              lines.push(`Many people are intrigued by the unique characteristics of the ${name}.`);
-              lines.push(`This animal plays an important role in its ecosystem.`);
-              lines.push(`Researchers have studied the ${name} to learn more about its behavior and adaptations.`);
-              lines.push(`Some individuals of this species can be identified by their distinct appearance.`);
-              lines.push(`The ${name} may interact with other animals and plants in its environment.`);
-              lines.push(`Conservation efforts are sometimes necessary to protect populations of ${name}.`);
-              lines.push(`Learning about the ${name} can help people appreciate biodiversity and nature.`);
-              // If desc exists, add it as the last line
-              if (desc) lines.push(desc);
-              fullDesc = lines.join(' ');
-            }
-            return (
-              <div
-                key={name + idx}
-                className={`rounded-lg shadow-lg p-6 flex flex-col items-center cursor-pointer ${isDangerous ? 'bg-red-700 bg-opacity-70' : 'bg-gray-800 bg-opacity-50'}`}
-                style={{
-                  transition: 'background 0.3s',
-                  border: isDangerous ? '2px solid #ff0000' : '2px solid rgba(255,255,255,0.1)',
-                  boxShadow: isDangerous ? '0 0 24px 4px #ff0000' : '0 0 24px 4px rgba(255,255,255,0.1)',
-                  color: isDangerous ? '#fff' : undefined
-                }}
-                onClick={() => setSelectedAnimal({ name, sciName, desc: fullDesc, rarity, imageUrl, isDangerous })}
-              >
-                <div className="w-32 h-32 mb-4 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
-                  {imageUrl ? (
-                    <Image src={imageUrl} alt={name} width={128} height={128} className="object-cover w-full h-full rounded-full" />
-                  ) : (
-                    <span className="text-gray-400">No image</span>
+          {filteredAnimals
+            .filter(animal => {
+              // Type guards for iNaturalist, eBird, GBIF
+              let name = "Unknown";
+              if ('taxon' in animal && animal.taxon) {
+                const taxon = animal.taxon as INatTaxonFull;
+                name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
+                  ? taxon.preferred_common_name
+                  : taxon.name || "Unknown";
+              } else if ('ebirdCommon' in animal) {
+                name = animal.ebirdCommon || "Unknown";
+              } else if ('comName' in animal || 'sciName' in animal) {
+                name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
+              } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
+                name = animal.gbifSpecies || "Unknown";
+              }
+              // Title case for animal name
+              function toTitleCase(str: string) {
+                return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+              }
+              name = toTitleCase(name);
+              return name !== "Unknown";
+            })
+            .map((animal, idx) => {
+              // Type guards for iNaturalist, eBird, GBIF
+              let imageUrl = "";
+              if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0 && animal.photos[0].url) {
+                imageUrl = animal.photos[0].url.replace("square.", "medium.");
+              }
+              let name = "Unknown";
+              let sciName = "";
+              let desc = "";
+              if ('taxon' in animal && animal.taxon) {
+                const taxon = animal.taxon as INatTaxonFull;
+                name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
+                  ? taxon.preferred_common_name
+                  : taxon.name || "Unknown";
+                sciName = taxon.name || "";
+                desc = typeof taxon.wikipedia_summary === 'string' ? taxon.wikipedia_summary : "";
+              } else if ('ebirdCommon' in animal) {
+                name = animal.ebirdCommon || "Unknown";
+                sciName = 'sciName' in animal ? animal.sciName || "" : "";
+              } else if ('comName' in animal || 'sciName' in animal) {
+                name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
+                sciName = 'sciName' in animal ? animal.sciName || "" : "";
+              } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
+                name = animal.gbifSpecies || "Unknown";
+                sciName = animal.gbifScientific || "";
+                desc = [
+                  animal.gbifClass,
+                  animal.gbifOrder,
+                  animal.gbifFamily,
+                  animal.gbifGenus
+                ].filter(Boolean).join(", ");
+              }
+              // Title case for animal name
+              function toTitleCase(str: string) {
+                return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+              }
+              name = toTitleCase(name);
+              // Danger/poison keyword check
+              const dangerKeywords = [
+                "poison", "venom", "danger", "toxic", "bite", "sting", "attack", "aggressive", "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish", "mosquito", "wasp", "bee", "ant", "centipede", "millipede", "lethal", "predator", "disease", "infection", "injury"
+              ];
+              const lowerName = name.toLowerCase();
+              const lowerSci = sciName.toLowerCase();
+              const lowerDesc = desc.toLowerCase();
+              const isDangerous = dangerKeywords.some(kw => lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw));
+              // Rarity estimation
+              let rarity: 'common' | 'rare' = 'common';
+              if (lowerName.includes('rare') || lowerDesc.includes('rare') || lowerDesc.includes('endangered') || lowerDesc.includes('threatened')) {
+                rarity = 'rare';
+              }
+              // Generate a varied, paragraph-style description of at least 10 lines
+              let fullDesc = desc;
+              if (!fullDesc || fullDesc.split('.').length < 10) {
+                const lines: string[] = [];
+                lines.push(`${name} (${sciName}) is a fascinating animal species.`);
+                lines.push(`It is commonly found in various habitats and regions.`);
+                lines.push(`The scientific name for this animal is ${sciName}.`);
+                lines.push(`Many people are intrigued by the unique characteristics of the ${name}.`);
+                lines.push(`This animal plays an important role in its ecosystem.`);
+                lines.push(`Researchers have studied the ${name} to learn more about its behavior and adaptations.`);
+                lines.push(`Some individuals of this species can be identified by their distinct appearance.`);
+                lines.push(`The ${name} may interact with other animals and plants in its environment.`);
+                lines.push(`Conservation efforts are sometimes necessary to protect populations of ${name}.`);
+                lines.push(`Learning about the ${name} can help people appreciate biodiversity and nature.`);
+                // If desc exists, add it as the last line
+                if (desc) lines.push(desc);
+                fullDesc = lines.join(' ');
+              }
+              return (
+                <div
+                  key={name + idx}
+                  className={`rounded-lg shadow-lg p-6 flex flex-col items-center cursor-pointer ${isDangerous ? 'bg-red-700 bg-opacity-70' : 'bg-gray-800 bg-opacity-50'}`}
+                  style={{
+                    transition: 'background 0.3s',
+                    border: isDangerous ? '2px solid #ff0000' : '2px solid rgba(255,255,255,0.1)',
+                    boxShadow: isDangerous ? '0 0 24px 4px #ff0000' : '0 0 24px 4px rgba(255,255,255,0.1)',
+                    color: isDangerous ? '#fff' : undefined
+                  }}
+                  onClick={() => setSelectedAnimal({ name, sciName, desc: fullDesc, rarity, imageUrl, isDangerous })}
+                >
+                  <div className="w-32 h-32 mb-4 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
+                    {imageUrl ? (
+                      <Image src={imageUrl} alt={name} width={128} height={128} className="object-cover w-full h-full rounded-full" />
+                    ) : (
+                      <span className="text-gray-400">No image</span>
+                    )}
+                  </div>
+                  <h2 className="text-xl font-semibold mb-2">{name}</h2>
+                  <p className="text-gray-400 mb-1">Scientific Name: {sciName}</p>
+                  {desc && (
+                    <p className="text-gray-300 text-center mt-2 text-sm">{desc}</p>
+                  )}
+                  {isDangerous && (
+                    <p className="text-red-200 text-center mt-2 text-sm font-bold">Warning: This animal may be dangerous or poisonous!</p>
                   )}
                 </div>
-                <h2 className="text-xl font-semibold mb-2">{name}</h2>
-                <p className="text-gray-400 mb-1">Scientific Name: {sciName}</p>
-                {desc && (
-                  <p className="text-gray-300 text-center mt-2 text-sm">{desc}</p>
-                )}
-                {isDangerous && (
-                  <p className="text-red-200 text-center mt-2 text-sm font-bold">Warning: This animal may be dangerous or poisonous!</p>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
       {/* Animal Modal */}
       {selectedAnimal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
