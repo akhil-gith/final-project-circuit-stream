@@ -52,6 +52,7 @@ export default function HomePage() {
     const sightRes = await fetch(apiUrl);
     const sightData = await sightRes.json();
     let allResults = sightData.results || [];
+
     // Fetch bird sightings from eBird (public API, returns recent birds)
     try {
       const ebirdRes = await fetch(`https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lon}&dist=13`, {
@@ -70,6 +71,35 @@ export default function HomePage() {
     } catch (err) {
       // Ignore eBird errors for now
     }
+
+    // Fetch animal occurrences from GBIF (Global Biodiversity Information Facility)
+    try {
+      // GBIF API: search for occurrences within bounding box
+      const gbifRadius = 0.2; // ~20km
+      const gbifMinLat = lat - gbifRadius;
+      const gbifMaxLat = lat + gbifRadius;
+      const gbifMinLon = lon - gbifRadius;
+      const gbifMaxLon = lon + gbifRadius;
+      const gbifUrl = `https://api.gbif.org/v1/occurrence/search?decimalLatitude=${gbifMinLat},${gbifMaxLat}&decimalLongitude=${gbifMinLon},${gbifMaxLon}&limit=50&hasCoordinate=true&hasGeospatialIssue=false`;
+      const gbifRes = await fetch(gbifUrl);
+      if (gbifRes.ok) {
+        const gbifData = await gbifRes.json();
+        // GBIF results: { species, scientificName, decimalLatitude, decimalLongitude, taxonRank, kingdom, phylum, class, order, family, genus }
+        const gbifSightings = gbifData.results.map((item: any) => ({
+          geojson: { coordinates: [item.decimalLongitude, item.decimalLatitude] },
+          gbifSpecies: item.species || item.scientificName || "Unknown",
+          gbifScientific: item.scientificName || "",
+          gbifClass: item.class || "",
+          gbifOrder: item.order || "",
+          gbifFamily: item.family || "",
+          gbifGenus: item.genus || "",
+        }));
+        allResults = [...allResults, ...gbifSightings];
+      }
+    } catch (err) {
+      // Ignore GBIF errors for now
+    }
+
     setSightings(allResults);
     setLoading(false);
   }
@@ -254,16 +284,41 @@ export default function HomePage() {
             <p className="text-gray-400 col-span-3">No animals found within 8 miles of this location.</p>
           )}
           {filteredAnimals.map((animal, idx) => {
-            // Try to get image from iNaturalist photo, fallback to none
+            // Type guards for iNaturalist, eBird, GBIF
             let imageUrl = "";
-            if (animal.photos && animal.photos.length > 0) {
-              imageUrl = animal.photos[0].url.replace("square.", "medium.");
+            // iNaturalist: photos array
+            if ('photos' in animal && Array.isArray((animal as any).photos) && (animal as any).photos.length > 0 && (animal as any).photos[0].url) {
+              imageUrl = (animal as any).photos[0].url.replace("square.", "medium.");
             }
             // Name and scientific name
-            const name = animal.taxon?.preferred_common_name || animal.ebirdCommon || animal.taxon?.name || "Unknown";
-            const sciName = animal.taxon?.name || "";
-            // Description (if available)
-            const desc = animal.taxon?.wikipedia_summary || "";
+            let name = "Unknown";
+            let sciName = "";
+            let desc = "";
+            if (animal.taxon) {
+              // iNaturalist: try to get extra fields via type assertion
+              const taxon = animal.taxon as any;
+              name = taxon.preferred_common_name || taxon.name || "Unknown";
+              sciName = taxon.name || "";
+              desc = taxon.wikipedia_summary || "";
+            } else if ((animal as any).ebirdCommon) {
+              // eBird custom result
+              name = (animal as any).ebirdCommon || "Unknown";
+              sciName = (animal as any).sciName || "";
+            } else if ((animal as any).comName || (animal as any).sciName) {
+              // eBird fallback
+              name = (animal as any).comName || "Unknown";
+              sciName = (animal as any).sciName || "";
+            } else if ((animal as any).gbifSpecies || (animal as any).gbifScientific) {
+              // GBIF result
+              name = (animal as any).gbifSpecies || "Unknown";
+              sciName = (animal as any).gbifScientific || "";
+              desc = [
+                (animal as any).gbifClass,
+                (animal as any).gbifOrder,
+                (animal as any).gbifFamily,
+                (animal as any).gbifGenus
+              ].filter(Boolean).join(", ");
+            }
             return (
               <div key={name + idx} className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center">
                 <div className="w-32 h-32 mb-4 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
