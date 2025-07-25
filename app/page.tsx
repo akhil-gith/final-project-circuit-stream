@@ -38,6 +38,8 @@ export default function HomePage() {
   type Sighting = INatSighting | EBirdSighting | GBIFSighting;
   const [sightings, setSightings] = useState<Sighting[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchCount, setSearchCount] = useState(0);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [selectedAnimal, setSelectedAnimal] = useState<{
     name: string;
     sciName: string;
@@ -49,7 +51,14 @@ export default function HomePage() {
   // Geocode location and fetch sightings from iNaturalist and eBird
   async function handleLocationSearch(e: React.FormEvent) {
     e.preventDefault();
+    setSearchError(null);
     if (!location) return;
+    // Limit search count for non-logged-in users
+    if (!user && searchCount >= 10) {
+      setSearchError("You have reached the maximum of 10 searches. Please log in or sign up to continue searching.");
+      return;
+    }
+    setSearchCount(c => !user ? c + 1 : c);
     setLoading(true);
     // Geocode location
     const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
@@ -290,6 +299,11 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold mb-6">Animal Explorer</h1>
         {/* Location Search Bar */}
         <form onSubmit={handleLocationSearch} className="flex flex-col items-center w-full max-w-md mb-6">
+          {searchError && (
+            <div className="bg-red-700 text-white rounded px-4 py-2 mb-2 w-full text-center font-semibold">
+              {searchError}
+            </div>
+          )}
           <input
             type="text"
             value={location}
