@@ -46,6 +46,25 @@ type SelectedAnimal = {
   facts?: string[];
 };
 
+// Define types for API responses
+type EBirdObservation = {
+  lng: number;
+  lat: number;
+  sciName: string;
+  comName: string;
+};
+
+type GBIFOccurrence = {
+  decimalLongitude: number;
+  decimalLatitude: number;
+  species?: string;
+  scientificName?: string;
+  class?: string;
+  order?: string;
+  family?: string;
+  genus?: string;
+};
+
 export default function HomePage() {
   // User and authentication state
   const [user, setUser] = useState<{ name: string; email: string; password?: string; photoUrl?: string } | null>(null);
@@ -153,8 +172,8 @@ export default function HomePage() {
         });
         
         if (ebirdRes.ok) {
-          const ebirdData = await ebirdRes.json();
-          const ebirdSightings = ebirdData.map((bird: any) => ({
+          const ebirdData: EBirdObservation[] = await ebirdRes.json();
+          const ebirdSightings = ebirdData.map((bird: EBirdObservation) => ({
             geojson: { coordinates: [bird.lng, bird.lat] },
             taxon: { name: bird.sciName },
             ebirdCommon: bird.comName,
@@ -177,8 +196,8 @@ export default function HomePage() {
         const gbifRes = await fetch(gbifUrl);
         
         if (gbifRes.ok) {
-          const gbifData = await gbifRes.json();
-          const gbifSightings = gbifData.results.map((item: any) => ({
+          const gbifData: { results: GBIFOccurrence[] } = await gbifRes.json();
+          const gbifSightings = gbifData.results.map((item: GBIFOccurrence) => ({
             geojson: { coordinates: [item.decimalLongitude, item.decimalLatitude] },
             gbifSpecies: item.species || item.scientificName || "Unknown",
             gbifScientific: item.scientificName || "",
@@ -822,9 +841,11 @@ export default function HomePage() {
       {coords && (
         <div className="flex flex-col items-center w-full mb-8 z-10 relative">
           <div className="relative w-full max-w-2xl mx-auto rounded-lg overflow-hidden shadow-lg border-2 border-blue-400 bg-white bg-opacity-80">
-            <img
+            <Image
               src={`https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${coords.lon},${coords.lat}&z=10&l=map&size=650,350&pt=${coords.lon},${coords.lat},pm2rdm`}
               alt="Map of location"
+              width={650}
+              height={350}
               className="w-full h-72 object-cover"
               style={{ minHeight: '280px', background: '#e0e7ef' }}
             />
