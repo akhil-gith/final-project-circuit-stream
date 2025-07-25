@@ -1,219 +1,213 @@
-  // State for view toggle and saved animals
-  const [showSaved, setShowSaved] = useState(false);
-  const [savedAnimals, setSavedAnimals] = useState<Array<{ name: string; sciName: string; desc: string; imageUrl: string }>>([]);
-"use client";
+ "use client";
 
 import { useState } from "react";
 import Image from "next/image";
 
-// animalData removed; animals will be shown dynamically from API results
+// Type definitions
+type INatTaxonBasic = { name?: string };
+type INatTaxonFull = { name?: string; preferred_common_name?: string; wikipedia_summary?: string };
+type INatSighting = {
+  geojson: { coordinates: [number, number] };
+  taxon?: INatTaxonBasic | INatTaxonFull;
+  photos?: { url: string }[];
+};
+type EBirdSighting = {
+  geojson: { coordinates: [number, number] };
+  ebirdCommon?: string;
+  sciName?: string;
+  taxon?: { name?: string };
+  comName?: string;
+};
+type GBIFSighting = {
+  geojson: { coordinates: [number, number] };
+  gbifSpecies?: string;
+  gbifScientific?: string;
+  gbifClass?: string;
+  gbifOrder?: string;
+  gbifFamily?: string;
+  gbifGenus?: string;
+};
+type Sighting = INatSighting | EBirdSighting | GBIFSighting;
+
+type SavedAnimal = {
+  name: string;
+  sciName: string;
+  desc: string;
+  imageUrl: string;
+};
+
+type SelectedAnimal = {
+  name: string;
+  sciName: string;
+  desc: string;
+  rarity: 'common' | 'rare';
+  imageUrl: string;
+  isDangerous?: boolean;
+  facts?: string[];
+};
 
 export default function HomePage() {
+  // User and authentication state
   const [user, setUser] = useState<{ name: string; email: string; password?: string; photoUrl?: string } | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
+  
+  // Settings and UI state
   const [showSettings, setShowSettings] = useState(false);
   const [editName, setEditName] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [searchUnit, setSearchUnit] = useState<'miles' | 'km'>('miles');
   const [searchRange, setSearchRange] = useState(8);
-  const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
-  const [location, setLocation] = useState("");
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
-  // Sighting types for iNaturalist, eBird, GBIF
-  type INatTaxonBasic = { name?: string };
-  type INatTaxonFull = { name?: string; preferred_common_name?: string; wikipedia_summary?: string };
-  type INatSighting = {
-    geojson: { coordinates: [number, number] };
-    taxon?: INatTaxonBasic | INatTaxonFull;
-    photos?: { url: string }[];
-  };
-  type EBirdSighting = {
-    geojson: { coordinates: [number, number] };
-    ebirdCommon?: string;
-    sciName?: string;
-    taxon?: { name?: string };
-    comName?: string;
-  };
-  type GBIFSighting = {
-    geojson: { coordinates: [number, number] };
-    gbifSpecies?: string;
-    gbifScientific?: string;
-    gbifClass?: string;
-    gbifOrder?: string;
-    gbifFamily?: string;
-    gbifGenus?: string;
-  };
-  type Sighting = INatSighting | EBirdSighting | GBIFSighting;
+  
+  // Search and location state
+  const [location, setLocation] = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [sightings, setSightings] = useState<Sighting[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchCount, setSearchCount] = useState(0);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [selectedAnimal, setSelectedAnimal] = useState<{
-    name: string;
-    sciName: string;
-    desc: string;
-    rarity: 'common' | 'rare';
-    imageUrl: string;
-    isDangerous?: boolean;
-    facts?: string[];
-  } | null>(null);
-  // Geocode location and fetch sightings from iNaturalist and eBird
-  async function handleLocationSearch(e: React.FormEvent) {
+  
+  // Animal display state
+  const [selectedAnimal, setSelectedAnimal] = useState<SelectedAnimal | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
+  const [savedAnimals, setSavedAnimals] = useState<SavedAnimal[]>([]);
+  
+  // Add Animal feature state
+  const [showAddAnimal, setShowAddAnimal] = useState(false);
+  const [addAnimalInput, setAddAnimalInput] = useState("");
+  const [addAnimalCard, setAddAnimalCard] = useState<SavedAnimal | null>(null);
+
+  // Utility functions
+  const toTitleCase = (str: string) => {
+    return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+  };
+
+  const handleAnimationPress = (element: HTMLElement) => {
+    element.classList.add('animate-press');
+    setTimeout(() => element.classList.remove('animate-press'), 300);
+  };
+
+  // Plant keywords for filtering
+  const plantKeywords = [
+    'plant', 'tree', 'flower', 'grass', 'herb', 'shrub', 'bush', 'fungi', 'moss', 'algae', 
+    'lichen', 'fern', 'pinophyta', 'magnoliophyta', 'poaceae', 'fabaceae', 'rosaceae', 
+    'asteraceae', 'cactaceae', 'orchidaceae', 'solanaceae', 'brassicaceae', 'lamiaceae'
+  ];
+
+  // Danger keywords for safety detection
+  const dangerKeywords = [
+    "poison", "venom", "danger", "toxic", "bite", "sting", "attack", "aggressive", 
+    "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", 
+    "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish"
+  ];
+
+  // Main search function
+  const handleLocationSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError(null);
     if (!location) return;
+
     // Limit search count for non-logged-in users
     if (!user && searchCount >= 10) {
       setSearchError("You have reached the maximum of 10 searches. Please log in or sign up to continue searching.");
       return;
     }
+    
     setSearchCount(c => !user ? c + 1 : c);
     setLoading(true);
-    // Geocode location
-    const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
-    const geoData = await geoRes.json();
-    if (!geoData[0]) {
-      setCoords(null);
-      setSightings([]);
+
+    try {
+      // Geocode location
+      const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
+      const geoData = await geoRes.json();
+
+      if (!geoData[0]) {
+        setCoords(null);
+        setSightings([]);
+        setLoading(false);
+        return;
+      }
+
+      const lat = parseFloat(geoData[0].lat);
+      const lon = parseFloat(geoData[0].lon);
+      setCoords({ lat, lon });
+
+      // Convert range to km if needed
+      const radiusKm = searchUnit === 'miles' ? searchRange * 1.60934 : searchRange;
+      let allResults: Sighting[] = [];
+
+      // Fetch from iNaturalist
+      const apiUrl = `https://api.inaturalist.org/v1/observations?lat=${lat}&lng=${lon}&radius=${radiusKm}&per_page=50&order=desc&order_by=created_at&verifiable=true&photos=true`;
+      const sightRes = await fetch(apiUrl);
+      const sightData = await sightRes.json();
+      allResults = sightData.results || [];
+
+      // Fetch from eBird (with error handling)
+      try {
+        const ebirdDist = searchUnit === 'miles' ? searchRange : Math.round(searchRange / 1.60934);
+        const ebirdRes = await fetch(`https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lon}&dist=${ebirdDist}`, {
+          headers: { 'X-eBirdApiToken': 'sample' } // Replace with real token
+        });
+        
+        if (ebirdRes.ok) {
+          const ebirdData = await ebirdRes.json();
+          const ebirdSightings = ebirdData.map((bird: any) => ({
+            geojson: { coordinates: [bird.lng, bird.lat] },
+            taxon: { name: bird.sciName },
+            ebirdCommon: bird.comName,
+          }));
+          allResults = [...allResults, ...ebirdSightings];
+        }
+      } catch (error) {
+        console.warn('eBird API error:', error);
+      }
+
+      // Fetch from GBIF (with error handling)
+      try {
+        const gbifRadius = searchUnit === 'miles' ? searchRange * 0.016 : searchRange * 0.01;
+        const gbifMinLat = lat - gbifRadius;
+        const gbifMaxLat = lat + gbifRadius;
+        const gbifMinLon = lon - gbifRadius;
+        const gbifMaxLon = lon + gbifRadius;
+        
+        const gbifUrl = `https://api.gbif.org/v1/occurrence/search?decimalLatitude=${gbifMinLat},${gbifMaxLat}&decimalLongitude=${gbifMinLon},${gbifMaxLon}&limit=50&hasCoordinate=true&hasGeospatialIssue=false`;
+        const gbifRes = await fetch(gbifUrl);
+        
+        if (gbifRes.ok) {
+          const gbifData = await gbifRes.json();
+          const gbifSightings = gbifData.results.map((item: any) => ({
+            geojson: { coordinates: [item.decimalLongitude, item.decimalLatitude] },
+            gbifSpecies: item.species || item.scientificName || "Unknown",
+            gbifScientific: item.scientificName || "",
+            gbifClass: item.class || "",
+            gbifOrder: item.order || "",
+            gbifFamily: item.family || "",
+            gbifGenus: item.genus || "",
+          }));
+          allResults = [...allResults, ...gbifSightings];
+        }
+      } catch (error) {
+        console.warn('GBIF API error:', error);
+      }
+
+      setSightings(allResults);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchError('An error occurred while searching. Please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-    const lat = parseFloat(geoData[0].lat);
-    const lon = parseFloat(geoData[0].lon);
-    setCoords({ lat, lon });
-    // Convert range to km if needed
-    const radiusKm = searchUnit === 'miles' ? searchRange * 1.60934 : searchRange;
-    const apiUrl = `https://api.inaturalist.org/v1/observations?lat=${lat}&lng=${lon}&radius=${radiusKm}&per_page=50&order=desc&order_by=created_at&verifiable=true&photos=true`;
-    const sightRes = await fetch(apiUrl);
-    const sightData = await sightRes.json();
-    let allResults = sightData.results || [];
+  };
 
-    // Fetch bird sightings from eBird (public API, returns recent birds)
-    try {
-      const ebirdDist = searchUnit === 'miles' ? searchRange : Math.round(searchRange / 1.60934);
-      const ebirdRes = await fetch(`https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lon}&dist=${ebirdDist}`, {
-        headers: { 'X-eBirdApiToken': 'sample' } // Replace 'sample' with your eBird API token
-      });
-      if (ebirdRes.ok) {
-        const ebirdData = await ebirdRes.json();
-        // eBird results: { comName, sciName, lat, lng }
-        const ebirdSightings = ebirdData.map((bird: EBirdSighting & { lng: number; lat: number; sciName?: string; comName?: string }) => ({
-          geojson: { coordinates: [bird.lng, bird.lat] },
-          taxon: { name: bird.sciName },
-          ebirdCommon: bird.comName,
-        }));
-        allResults = [...allResults, ...ebirdSightings];
-      }
-    } catch {
-      // Ignore eBird errors for now
-    }
-
-    // Fetch animal occurrences from GBIF (Global Biodiversity Information Facility)
-    try {
-      // GBIF API: search for occurrences within bounding box
-      const gbifRadius = searchUnit === 'miles' ? searchRange * 0.016 : searchRange * 0.01; // ~1 mile = 0.016 deg, 1 km = 0.01 deg
-      const gbifMinLat = lat - gbifRadius;
-      const gbifMaxLat = lat + gbifRadius;
-      const gbifMinLon = lon - gbifRadius;
-      const gbifMaxLon = lon + gbifRadius;
-      const gbifUrl = `https://api.gbif.org/v1/occurrence/search?decimalLatitude=${gbifMinLat},${gbifMaxLat}&decimalLongitude=${gbifMinLon},${gbifMaxLon}&limit=50&hasCoordinate=true&hasGeospatialIssue=false`;
-      const gbifRes = await fetch(gbifUrl);
-      if (gbifRes.ok) {
-        const gbifData = await gbifRes.json();
-        // GBIF results: { species, scientificName, decimalLatitude, decimalLongitude, taxonRank, kingdom, phylum, class, order, family, genus }
-        const gbifSightings = gbifData.results.map((item: GBIFSighting & {
-          decimalLongitude: number;
-          decimalLatitude: number;
-          species?: string;
-          scientificName?: string;
-          class?: string;
-          order?: string;
-          family?: string;
-          genus?: string;
-        }) => ({
-          geojson: { coordinates: [item.decimalLongitude, item.decimalLatitude] },
-          gbifSpecies: item.species || item.scientificName || "Unknown",
-          gbifScientific: item.scientificName || "",
-          gbifClass: item.class || "",
-          gbifOrder: item.order || "",
-          gbifFamily: item.family || "",
-          gbifGenus: item.genus || "",
-        }));
-        allResults = [...allResults, ...gbifSightings];
-      }
-    } catch {
-      // Ignore GBIF errors for now
-    }
-
-    setSightings(allResults);
-    setLoading(false);
-  }
-  // Use all sightings as animals to display
-  const filteredAnimals = sightings;
-
-  return (
-    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
-      {/* Jungle Background Video */}
-      <div className="fixed top-0 left-0 w-full h-full z-0 pointer-events-none">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover"
-          style={{ pointerEvents: 'none' }}
-        >
-          <source src="/final-project-circuit-stream/videos/jungle.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        {/* Black overlay for darkening */}
-        <div style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.55)', zIndex: 1, pointerEvents: 'none'}} />
-      </div>
-
-      {/* Top bar with Help/Feedback, Add Animal, Toggle, and Login/Signup or Profile */}
-      <div className="absolute top-0 left-0 w-full flex justify-between items-center p-4 z-[100] pointer-events-none" style={{background: 'transparent'}}>
-        {/* Add Animal Button (upper left) and Toggle */}
-        <div className="flex items-center pointer-events-auto gap-2">
-          <button
-            className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow active:animate-press"
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.18)' }}
-            onClick={e => {
-              e.currentTarget.classList.add('animate-press');
-              setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-              setShowAddAnimal(true);
-            }}
-            title="Add Animal"
-          >
-            +
-          </button>
-          <button
-            className={`bg-gray-700 hover:bg-gray-800 text-white rounded px-3 py-2 font-bold shadow active:animate-press text-sm ml-1 ${showSaved ? 'bg-blue-700' : ''}`}
-            onClick={e => {
-              e.currentTarget.classList.add('animate-press');
-              setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-              setShowSaved(s => !s);
-            }}
-            title={showSaved ? "Show Search" : "Show Saved Animals"}
-          >
-            {showSaved ? "Search" : "Saved"}
-          </button>
-        </div>
-        <div className="flex flex-col items-end mr-4 gap-2 pointer-events-auto">
-          {/* ...existing code... */}
-  // State for Add Animal feature (ensure at top level)
-  const [showAddAnimal, setShowAddAnimal] = useState(false);
-  const [addAnimalInput, setAddAnimalInput] = useState("");
-  const [addAnimalCard, setAddAnimalCard] = useState<null | { name: string; sciName: string; desc: string; imageUrl: string }>(null);
-
-  // Simulate animal lookup (real app would call an API)
-  async function handleAddAnimalSubmit(e: React.FormEvent) {
+  // Add Animal functionality
+  const handleAddAnimalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const input = addAnimalInput.trim();
     if (!input) return;
-    // For demo, just use the input as both name and sciName, and a placeholder desc/image
+
     setAddAnimalCard({
       name: input,
       sciName: input,
@@ -222,43 +216,268 @@ export default function HomePage() {
     });
     setShowAddAnimal(false);
     setAddAnimalInput("");
-  }
-      {/* Add Animal Modal (input prompt) */}
+  };
+
+  // Filter animals (remove plants)
+  const filterAnimals = (animals: Sighting[]) => {
+    return animals.filter(animal => {
+      let name = "Unknown";
+      let gbifClass = "";
+      let gbifOrder = "";
+      let gbifFamily = "";
+      let gbifGenus = "";
+
+      if ('taxon' in animal && animal.taxon) {
+        const taxon = animal.taxon as INatTaxonFull;
+        name = taxon.preferred_common_name || taxon.name || "Unknown";
+      } else if ('ebirdCommon' in animal) {
+        name = animal.ebirdCommon || "Unknown";
+      } else if ('gbifSpecies' in animal) {
+        name = animal.gbifSpecies || "Unknown";
+        gbifClass = animal.gbifClass || "";
+        gbifOrder = animal.gbifOrder || "";
+        gbifFamily = animal.gbifFamily || "";
+        gbifGenus = animal.gbifGenus || "";
+      }
+
+      name = toTitleCase(name);
+      const lowerName = name.toLowerCase();
+      const lowerClass = gbifClass.toLowerCase();
+      const lowerOrder = gbifOrder.toLowerCase();
+      const lowerFamily = gbifFamily.toLowerCase();
+      const lowerGenus = gbifGenus.toLowerCase();
+
+      // Filter out plants
+      const isPlant = plantKeywords.some(kw =>
+        lowerName.includes(kw) ||
+        lowerClass.includes(kw) ||
+        lowerOrder.includes(kw) ||
+        lowerFamily.includes(kw) ||
+        lowerGenus.includes(kw)
+      );
+
+      return !isPlant && name !== "Unknown";
+    });
+  };
+
+  // Process animal data
+  const processAnimalData = (animal: Sighting, idx: number) => {
+    let imageUrl = "";
+    if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0) {
+      imageUrl = animal.photos[0].url.replace("square.", "medium.");
+    }
+
+    let name = "Unknown";
+    let sciName = "";
+    let desc = "";
+
+    if ('taxon' in animal && animal.taxon) {
+      const taxon = animal.taxon as INatTaxonFull;
+      name = taxon.preferred_common_name || taxon.name || "Unknown";
+      sciName = taxon.name || "";
+      desc = taxon.wikipedia_summary || "";
+    } else if ('ebirdCommon' in animal) {
+      name = animal.ebirdCommon || "Unknown";
+      sciName = ('sciName' in animal) ? animal.sciName || "" : "";
+    } else if ('gbifSpecies' in animal) {
+      name = animal.gbifSpecies || "Unknown";
+      sciName = animal.gbifScientific || "";
+      desc = [animal.gbifClass, animal.gbifOrder, animal.gbifFamily, animal.gbifGenus]
+        .filter(Boolean).join(", ");
+    }
+
+    name = toTitleCase(name);
+    
+    // Check if dangerous
+    const lowerName = name.toLowerCase();
+    const lowerSci = sciName.toLowerCase();
+    const lowerDesc = desc.toLowerCase();
+    const isDangerous = dangerKeywords.some(kw => 
+      lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw)
+    );
+
+    // Determine rarity
+    const rarity: 'common' | 'rare' = (
+      lowerName.includes('rare') || 
+      lowerDesc.includes('rare') || 
+      lowerDesc.includes('endangered') || 
+      lowerDesc.includes('threatened')
+    ) ? 'rare' : 'common';
+
+    // Generate description if needed
+    let fullDesc = desc;
+    if (!fullDesc || fullDesc.split('.').length < 3) {
+      fullDesc = `${name} (${sciName}) is a fascinating animal species found in various habitats. This animal plays an important role in its ecosystem and continues to be studied by researchers. Learning about ${name} helps us appreciate biodiversity and nature.`;
+    }
+
+    return { name, sciName, desc: fullDesc, rarity, imageUrl, isDangerous, key: name + idx };
+  };
+
+  const filteredAnimals = filterAnimals(sightings);
+
+  return (
+    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
+      {/* Background Video */}
+      <div className="fixed top-0 left-0 w-full h-full z-0 pointer-events-none">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        >
+          <source src="/final-project-circuit-stream/videos/jungle.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-55 z-1" />
+      </div>
+
+      {/* Top Navigation Bar */}
+      <div className="absolute top-0 left-0 w-full flex justify-between items-center p-4 z-50">
+        {/* Left side buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow"
+            onClick={(e) => {
+              handleAnimationPress(e.currentTarget);
+              setShowAddAnimal(true);
+            }}
+            title="Add Animal"
+          >
+            +
+          </button>
+          <button
+            className={`bg-gray-700 hover:bg-gray-800 text-white rounded px-3 py-2 font-bold shadow text-sm ml-1 ${showSaved ? 'bg-blue-700' : ''}`}
+            onClick={(e) => {
+              handleAnimationPress(e.currentTarget);
+              setShowSaved(s => !s);
+            }}
+            title={showSaved ? "Show Search" : "Show Saved Animals"}
+          >
+            {showSaved ? "Search" : "Saved"}
+          </button>
+        </div>
+
+        {/* Help and Feedback buttons */}
+        <div className="flex flex-col items-end mr-4 gap-2">
+          <button
+            className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold"
+            onClick={(e) => {
+              handleAnimationPress(e.currentTarget);
+              setShowHelp(true);
+            }}
+            title="Help / Tutorial"
+          >
+            ❓
+          </button>
+          <button
+            className="bg-blue-500 text-white px-3 py-2 rounded shadow hover:bg-blue-600 font-bold"
+            onClick={(e) => {
+              handleAnimationPress(e.currentTarget);
+              setShowFeedback(true);
+            }}
+            title="Send Feedback"
+          >
+            Feedback
+          </button>
+        </div>
+
+        {/* Right side - Auth/Profile */}
+        <div className="flex items-center space-x-4">
+          <button
+            className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2 text-xl"
+            onClick={(e) => {
+              handleAnimationPress(e.currentTarget);
+              setEditName(user?.name || "");
+              setEditPassword(user?.password || "");
+              setShowSettings(true);
+            }}
+            title="Settings"
+          >
+            ⚙️
+          </button>
+          
+          {!user ? (
+            <>
+              <button
+                className="bg-white text-black px-4 py-2 rounded mr-2 hover:bg-gray-200"
+                onClick={(e) => {
+                  handleAnimationPress(e.currentTarget);
+                  setShowAuth('login');
+                }}
+              >
+                Log In
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={(e) => {
+                  handleAnimationPress(e.currentTarget);
+                  setShowAuth('signup');
+                }}
+              >
+                Sign Up
+              </button>
+            </>
+          ) : (
+            <>
+              {user.photoUrl ? (
+                <Image src={user.photoUrl} alt="Profile" width={32} height={32} className="rounded-full border-2 border-blue-400 shadow-lg" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-green-400 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">{user.name ? user.name[0].toUpperCase() : 'U'}</span>
+                </div>
+              )}
+              <span className="font-semibold">{user.name}</span>
+              <button
+                className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200"
+                onClick={(e) => {
+                  handleAnimationPress(e.currentTarget);
+                  setShowLogoutConfirm(true);
+                }}
+              >
+                Log Out
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Modals */}
+      {/* Add Animal Modal */}
       {showAddAnimal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[999] animate-fadein">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-sm w-full relative flex flex-col items-center animate-fadein">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-sm w-full relative flex flex-col items-center">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
-              onClick={e => {
-                e.currentTarget.classList.add('animate-press');
-                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => {
                 setShowAddAnimal(false);
                 setAddAnimalInput("");
               }}
-              aria-label="Close"
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-center">Add Animal by Name</h2>
             <form onSubmit={handleAddAnimalSubmit} className="w-full flex flex-col gap-4">
               <input
                 type="text"
                 value={addAnimalInput}
-                onChange={e => setAddAnimalInput(e.target.value)}
-                placeholder="Enter animal name (common or scientific)"
+                onChange={(e) => setAddAnimalInput(e.target.value)}
+                placeholder="Enter animal name"
                 className="border px-3 py-2 rounded w-full"
                 required
                 autoFocus
               />
-              <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded w-full hover:bg-green-700 font-bold">Show Animal Card</button>
+              <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded w-full hover:bg-green-700 font-bold">
+                Show Animal Card
+              </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Add Animal Card (shows after input) */}
+      {/* Add Animal Card Display */}
       {addAnimalCard && !selectedAnimal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[999] animate-fadein">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div
-            className="rounded-lg shadow-lg p-4 flex flex-col items-center cursor-pointer w-64 max-w-full bg-gray-800 bg-opacity-90 relative animate-fadein"
+            className="rounded-lg shadow-lg p-4 flex flex-col items-center cursor-pointer w-64 max-w-full bg-gray-800 bg-opacity-90 relative"
             style={{ border: '2px solid #4ade80', boxShadow: '0 0 16px 2px #4ade80', color: '#fff' }}
             onClick={() => setSelectedAnimal({
               name: addAnimalCard.name,
@@ -280,133 +499,11 @@ export default function HomePage() {
           </div>
         </div>
       )}
-          <button
-            className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein active:animate-press"
-            onClick={e => {
-              e.currentTarget.classList.add('animate-press');
-              setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-              setShowHelp(true);
-            }}
-            title="Help / Tutorial"
-          >
-            ❓
-          </button>
-          <button
-            className="bg-blue-500 text-white px-3 py-2 rounded shadow hover:bg-blue-600 font-bold animate-fadein active:animate-press"
-            onClick={e => {
-              e.currentTarget.classList.add('animate-press');
-              setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-              setShowFeedback(true);
-            }}
-            title="Send Feedback"
-          >
-            Feedback
-          </button>
-        </div>
-        <div className="flex items-center space-x-4 pointer-events-auto">
-          {/* Settings button for all users */}
-          <button
-            className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2 text-xl active:animate-press"
-            onClick={e => {
-              e.currentTarget.classList.add('animate-press');
-              setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-              setEditName(user?.name || "");
-              setEditPassword(user?.password || "");
-              setShowSettings(true);
-            }}
-            title="Settings"
-          >
-            ⚙️
-          </button>
-          {!user ? (
-            <>
-              <button
-                className="bg-white text-black px-4 py-2 rounded mr-2 hover:bg-gray-200 active:animate-press"
-                onClick={e => {
-                  e.currentTarget.classList.add('animate-press');
-                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                  setShowAuth('login');
-                }}
-              >
-                Log In
-              </button>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 active:animate-press"
-                onClick={e => {
-                  e.currentTarget.classList.add('animate-press');
-                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                  setShowAuth('signup');
-                }}
-              >
-                Sign Up
-              </button>
-            </>
-          ) : (
-            <>
-              {/* Custom profile logo */}
-              {user.photoUrl ? (
-                <Image src={user.photoUrl} alt="Profile" width={32} height={32} className="rounded-full border-2 border-blue-400 shadow-lg animate-swoosh" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-green-400 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">{user.name ? user.name[0].toUpperCase() : 'U'}</span>
-                </div>
-              )}
-              <span className="font-semibold">{user.name}</span>
-              <button
-                className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200 transition-all duration-300 active:animate-press"
-                onClick={e => {
-                  e.currentTarget.classList.add('animate-press');
-                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                  setShowLogoutConfirm(true);
-                }}
-              >
-                Log Out
-              </button>
-      {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[999] animate-fadein">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-sm w-full relative flex flex-col items-center animate-fadein">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
-              onClick={e => {
-                e.currentTarget.classList.add('animate-press');
-                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                setShowLogoutConfirm(false);
-              }}
-              aria-label="Close"
-            >×</button>
-            <h2 className="text-xl font-bold mb-4 text-center">Are you sure you want to log out?</h2>
-            <div className="flex gap-4 mt-2">
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded font-bold hover:bg-red-600 transition-all duration-300 active:animate-press"
-                onClick={e => {
-                  e.currentTarget.classList.add('animate-press');
-                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                  setUser(null);
-                  setShowLogoutConfirm(false);
-                }}
-              >Log Out</button>
-              <button
-                className="bg-gray-300 text-black px-4 py-2 rounded font-bold hover:bg-gray-400 transition-all duration-300 active:animate-press"
-                onClick={e => {
-                  e.currentTarget.classList.add('animate-press');
-                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                  setShowLogoutConfirm(false);
-                }}
-              >Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-            </>
-          )}
-        </div>
-      </div>
 
-      {/* Auth Modal - direct child, highest z-index */}
+      {/* Auth Modal */}
       {showAuth && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[999]">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[300px] relative animate-fadein">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[300px] relative">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-black"
               onClick={() => setShowAuth(null)}
@@ -415,7 +512,7 @@ export default function HomePage() {
             </button>
             <h2 className="text-xl font-bold mb-4">{showAuth === 'login' ? 'Log In' : 'Sign Up'}</h2>
             <form
-              onSubmit={e => {
+              onSubmit={(e) => {
                 e.preventDefault();
                 const form = e.target as HTMLFormElement;
                 const name = (form.elements.namedItem('name') as HTMLInputElement)?.value || '';
@@ -454,41 +551,56 @@ export default function HomePage() {
                 {showAuth === 'login' ? 'Log In' : 'Sign Up'}
               </button>
             </form>
-            <div className="flex flex-col items-center mt-2">
+            <button
+              className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100"
+              onClick={() => {
+                setUser({ name: 'Google User', email: 'user@gmail.com', photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' });
+                setShowAuth(null);
+              }}
+            >
+              Continue with Google
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-sm w-full relative flex flex-col items-center">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowLogoutConfirm(false)}
+            >×</button>
+            <h2 className="text-xl font-bold mb-4 text-center">Are you sure you want to log out?</h2>
+            <div className="flex gap-4 mt-2">
               <button
-                className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100 transition-all duration-300 animate-fadein"
+                className="bg-red-500 text-white px-4 py-2 rounded font-bold hover:bg-red-600"
                 onClick={() => {
-                  setUser({ name: 'Google User', email: 'user@gmail.com', photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' });
-                  setShowAuth(null);
+                  setUser(null);
+                  setShowLogoutConfirm(false);
                 }}
-              >
-                <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g><path d="M44.5 20H24V28.5H35.7C34.3 32.6 30.6 35.5 24 35.5C17.1 35.5 11.5 29.9 11.5 23C11.5 16.1 17.1 10.5 24 10.5C27.1 10.5 29.7 11.6 31.7 13.4L37.1 8C33.6 4.9 29.1 3 24 3C12.4 3 3 12.4 3 24C3 35.6 12.4 45 24 45C35.6 45 45 35.6 45 24C45 22.7 44.8 21.3 44.5 20Z" fill="#FFC107"/><path d="M6.3 14.7L12.5 19.1C14.5 15.1 18.9 12.5 24 12.5C27.1 12.5 29.7 13.6 31.7 15.4L37.1 10C33.6 6.9 29.1 5 24 5C16.1 5 9.1 10.1 6.3 14.7Z" fill="#FF3D00"/><path d="M24 44C29.1 44 33.6 42.1 37.1 39L31.7 33.6C29.7 35.4 27.1 36.5 24 36.5C18.9 36.5 14.5 33.9 12.5 29.9L6.3 34.3C9.1 38.9 16.1 44 24 44Z" fill="#4CAF50"/><path d="M44.5 20H24V28.5H35.7C35.1 30.2 34.1 31.7 32.7 32.8L38.1 37.2C40.7 34.8 42.5 31.7 44.5 28.5Z" fill="#1976D2"/></g></svg>
-                Continue with Google
-              </button>
+              >Log Out</button>
+              <button
+                className="bg-gray-300 text-black px-4 py-2 rounded font-bold hover:bg-gray-400"
+                onClick={() => setShowLogoutConfirm(false)}
+              >Cancel</button>
             </div>
           </div>
         </div>
       )}
-      {/* ...existing code... */}
-      {/* ...existing code... */}
-
-      {/* ...existing code... */}
 
       {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[350px] relative flex flex-col items-center animate-fadein">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[350px] relative flex flex-col items-center">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
-              onClick={e => {
-                e.currentTarget.classList.add('animate-press');
-                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                setShowSettings(false);
-              }}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowSettings(false)}
             >×</button>
             <h2 className="text-xl font-bold mb-4">Settings</h2>
             <form
-              onSubmit={e => {
+              onSubmit={(e) => {
                 e.preventDefault();
                 setUser(u => u ? { ...u, name: editName, password: editPassword } : u);
                 setShowSettings(false);
@@ -499,7 +611,7 @@ export default function HomePage() {
               <input
                 type="text"
                 value={editName}
-                onChange={e => setEditName(e.target.value)}
+                onChange={(e) => setEditName(e.target.value)}
                 className="border px-3 py-2 rounded w-full"
                 required
               />
@@ -507,7 +619,7 @@ export default function HomePage() {
               <input
                 type="password"
                 value={editPassword}
-                onChange={e => setEditPassword(e.target.value)}
+                onChange={(e) => setEditPassword(e.target.value)}
                 className="border px-3 py-2 rounded w-full"
                 required
               />
@@ -518,7 +630,7 @@ export default function HomePage() {
                   min={searchUnit === 'miles' ? 8 : 13}
                   max={searchUnit === 'miles' ? 50 : 80}
                   value={searchRange}
-                  onChange={e => setSearchRange(Number(e.target.value))}
+                  onChange={(e) => setSearchRange(Number(e.target.value))}
                   className="border px-3 py-2 rounded w-24"
                   required
                 />
@@ -549,14 +661,10 @@ export default function HomePage() {
       {/* Help Modal */}
       {showHelp && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-lg w-full relative animate-fadein">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-lg w-full relative">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
-              onClick={e => {
-                e.currentTarget.classList.add('animate-press');
-                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                setShowHelp(false);
-              }}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowHelp(false)}
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-center">How to Use Animal Explorer</h2>
             <ol className="list-decimal list-inside text-left text-base mb-4">
@@ -572,21 +680,18 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
       {/* Feedback Modal */}
       {showFeedback && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-lg w-full relative animate-fadein">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-lg w-full relative">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
-              onClick={e => {
-                e.currentTarget.classList.add('animate-press');
-                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                setShowFeedback(false);
-              }}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowFeedback(false)}
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-center">Send Feedback</h2>
             <form
-              onSubmit={e => {
+              onSubmit={(e) => {
                 e.preventDefault();
                 window.location.href = `mailto:akhilsnalluri@gmail.com?subject=Animal Explorer Feedback&body=${encodeURIComponent(feedbackText)}`;
                 setShowFeedback(false);
@@ -597,7 +702,7 @@ export default function HomePage() {
               <label className="font-semibold">Your feedback or suggestions:</label>
               <textarea
                 value={feedbackText}
-                onChange={e => setFeedbackText(e.target.value)}
+                onChange={(e) => setFeedbackText(e.target.value)}
                 rows={5}
                 className="border px-3 py-2 rounded w-full resize-none"
                 placeholder="How is the app performance? Any improvements you'd like to see?"
@@ -612,16 +717,101 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Spacer to prevent overlap with About section */}
+      {/* Animal Detail Modal */}
+      {selectedAnimal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-white bg-opacity-90 rounded-xl shadow-2xl p-10 max-w-lg w-full relative flex flex-col items-center">
+            {/* Add Animal button for added animals */}
+            {addAnimalCard && selectedAnimal.name === addAnimalCard.name && (
+              <button
+                className="absolute top-4 left-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold shadow"
+                onClick={() => {
+                  setSavedAnimals(list => {
+                    if (list.some(a => a.name === selectedAnimal.name)) return list;
+                    return [...list, {
+                      name: selectedAnimal.name,
+                      sciName: selectedAnimal.sciName,
+                      desc: selectedAnimal.desc,
+                      imageUrl: selectedAnimal.imageUrl
+                    }];
+                  });
+                  alert('Animal added to Saved!');
+                }}
+              >Add Animal</button>
+            )}
+            
+            <button
+              className="absolute top-4 right-4 text-gray-600 hover:text-black text-2xl font-bold"
+              onClick={() => setSelectedAnimal(null)}
+            >×</button>
+            
+            {selectedAnimal.imageUrl ? (
+              <Image 
+                src={selectedAnimal.imageUrl} 
+                alt={selectedAnimal.name} 
+                width={160} 
+                height={160} 
+                className="object-cover rounded-full mb-4" 
+              />
+            ) : (
+              <div className="w-40 h-40 mb-4 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-gray-500">No image</span>
+              </div>
+            )}
+            
+            <h2 className="text-2xl font-bold mb-2 text-center text-black">{selectedAnimal.name}</h2>
+            <p className="mb-2 text-center text-gray-700">Scientific Name: {selectedAnimal.sciName}</p>
+            
+            {/* Rarity indicator */}
+            <div className="w-full flex items-center justify-center mb-4">
+              <span className="mr-2 text-sm text-gray-700">Rarity:</span>
+              <div className="w-32 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-purple-700 flex items-center">
+                <div
+                  className="h-4 rounded-full transition-all duration-300"
+                  style={{
+                    width: selectedAnimal.rarity === 'rare' ? '80%' : '20%',
+                    background: selectedAnimal.rarity === 'rare' ? 'purple' : 'red',
+                  }}
+                />
+              </div>
+              <span className="ml-2 text-sm font-bold" style={{ color: selectedAnimal.rarity === 'rare' ? 'purple' : 'red' }}>
+                {selectedAnimal.rarity === 'rare' ? 'Rare' : 'Common'}
+              </span>
+            </div>
+            
+            <p className="text-base leading-relaxed text-center mb-2 text-black max-h-96 overflow-y-auto">
+              {selectedAnimal.desc}
+            </p>
+            
+            {/* Danger warning */}
+            {selectedAnimal.isDangerous && (
+              <div className="w-full mt-4 mb-2">
+                <h3 className="text-lg font-bold text-red-700 mb-2 text-center">⚠️ Safety Warning</h3>
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                  <p className="text-red-800 text-sm mb-2">This animal may be dangerous. Common risks include:</p>
+                  <ul className="list-disc list-inside text-red-700 text-sm">
+                    <li>May bite or sting when threatened</li>
+                    <li>Could carry diseases or toxins</li>
+                    <li>Maintain safe distance if encountered</li>
+                    <li>Contact local wildlife authorities if needed</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Spacer for content */}
       <div className="h-28 md:h-32 lg:h-36" />
 
       {/* About Section */}
       <div className="flex flex-col items-center mt-8 mb-8 z-10 relative">
         <h2 className="text-2xl font-bold mb-2 text-white drop-shadow-lg md:text-3xl lg:text-4xl">About Animal Explorer</h2>
-        <p className="max-w-xl text-center text-white text-base md:text-lg lg:text-xl drop-shadow-md bg-gradient-to-r from-blue-900 via-purple-900 to-gray-900 bg-clip-text">
+        <p className="max-w-xl text-center text-white text-base md:text-lg lg:text-xl drop-shadow-md px-4">
           Animal Explorer helps you discover animals around the world, learn about their habitats, and see where they live. Sign up to save your favorite animals and get updates on sightings!
         </p>
-        <div className="max-w-xl mt-4 text-center text-white text-base md:text-lg lg:text-xl drop-shadow-md bg-gradient-to-r from-gray-900 via-purple-900 to-blue-900 bg-clip-text px-2 py-3 rounded-lg" style={{background: 'rgba(30,30,60,0.7)'}}>
+        <div className="max-w-xl mt-4 text-center text-white text-base md:text-lg lg:text-xl drop-shadow-md px-2 py-3 rounded-lg bg-black bg-opacity-50">
           <span className="font-semibold text-yellow-300">Why I made this app:</span><br />
           The reason I have made this app was a long story. It all stems from my experience at a local AirBnB in the woods. There was a bear and my grandmother happened to be the closest one to it. Of course, it would have been nice to have a warning, thus the reason for this app.<br /><br />
           <span className="font-semibold text-green-300">Thank you!</span> And thank you so much for visiting my app, and if you have any questions or feedback, please fill out the feedback form and I will come back to you.
@@ -646,327 +836,18 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-block w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></span>
-                <span className="font-semibold text-black">Animal Sighting (non-plant)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 rounded-full bg-gray-400 border-2 border-white"></span>
-                <span className="font-semibold text-black">Plants (filtered out)</span>
+                <span className="font-semibold text-black">Animal Sighting</span>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Animal Explorer Section */}
-      <div className="flex flex-col items-center mt-6 mb-10 z-10 relative">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4">Animal Explorer</h1>
-        {/* Location Search Bar */}
-        <form onSubmit={handleLocationSearch} className="flex flex-col items-center w-full max-w-xs md:max-w-md mb-4 gap-2">
-          {searchError && (
-            <div className="bg-red-700 text-white rounded px-3 py-1.5 mb-1 w-full text-center font-semibold text-sm">
-              {searchError}
-            </div>
-          )}
-          <input
-            type="text"
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-            placeholder="Enter your location (city, address, etc.)"
-            className="px-3 py-1.5 rounded w-full bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-blue-500 mb-1 text-sm md:text-base"
-            required
-          />
-          <button type="submit" className="bg-blue-500 text-white px-3 py-1.5 rounded w-full hover:bg-blue-600 text-sm md:text-base" disabled={loading}>
-            {loading ? "Searching..." : "Find Animals Near Me"}
-          </button>
-        </form>
-        {coords && (
-          <p className="text-gray-400 mb-2 text-sm md:text-base">Showing animals within {searchRange} {searchUnit} of <span className="font-semibold">{location}</span></p>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {filteredAnimals.length === 0 && coords && !loading && (
-            <p className="text-gray-400 col-span-3 text-sm">No animals found within 8 miles of this location.</p>
-          )}
-          {filteredAnimals
-            .filter(animal => {
-              // Exclude plants by checking for plant-related keywords in class/order/family/genus or name
-              let name = "Unknown";
-              let gbifClass = "";
-              let gbifOrder = "";
-              let gbifFamily = "";
-              let gbifGenus = "";
-              if ('taxon' in animal && animal.taxon) {
-                const taxon = animal.taxon as INatTaxonFull;
-                name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
-                  ? taxon.preferred_common_name
-                  : taxon.name || "Unknown";
-              } else if ('ebirdCommon' in animal) {
-                name = animal.ebirdCommon || "Unknown";
-              } else if ('comName' in animal || 'sciName' in animal) {
-                name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
-              } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
-                name = animal.gbifSpecies || "Unknown";
-                gbifClass = animal.gbifClass || "";
-                gbifOrder = animal.gbifOrder || "";
-                gbifFamily = animal.gbifFamily || "";
-                gbifGenus = animal.gbifGenus || "";
-              }
-              // Title case for animal name
-              function toTitleCase(str: string) {
-                return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-              }
-              name = toTitleCase(name);
-              // Exclude if plant-related
-              const plantKeywords = [
-                'plant', 'tree', 'flower', 'grass', 'herb', 'shrub', 'bush', 'fungi', 'moss', 'algae', 'lichen', 'fern', 'pinophyta', 'magnoliophyta', 'poaceae', 'fabaceae', 'rosaceae', 'asteraceae', 'cactaceae', 'orchidaceae', 'solanaceae', 'brassicaceae', 'lamiaceae', 'apiaceae', 'cupressaceae', 'euphorbiaceae', 'malvaceae', 'myrtaceae', 'rubiaceae', 'sapindaceae', 'araceae', 'amaranthaceae', 'cucurbitaceae', 'cyperaceae', 'ericaceae', 'iridaceae', 'lauraceae', 'moraceae', 'oleaceae', 'palm', 'palmae', 'pinaceae', 'rhamnaceae', 'rutaceae', 'salicaceae', 'ulvophyceae', 'bryophyta', 'pteridophyta', 'gymnosperm', 'angiosperm', 'monocot', 'dicot', 'seed plant', 'vascular plant', 'nonvascular plant', 'eudicot', 'magnoliid', 'basal angiosperm', 'chlorophyta', 'marchantiophyta', 'anthocerotophyta', 'gnetophyta', 'ginkgophyta', 'cycadophyta', 'coniferophyta', 'lycopodiophyta', 'sphenophyta', 'psilotophyta', 'charophyta', 'rhodophyta', 'phaeophyceae', 'bryopsida', 'sphagnopsida', 'polytrichopsida', 'hepatics', 'liverwort', 'hornwort', 'clubmoss', 'horsetail', 'quercus', 'acer', 'pinus', 'picea', 'betula', 'salix', 'populus', 'alnus', 'corylus', 'fagus', 'fraxinus', 'tilia', 'ulmus', 'carpinus', 'juglans', 'castanea', 'sorbus', 'prunus', 'malus', 'pyrus', 'crataegus', 'ribes', 'rubus', 'vaccinium', 'sambucus', 'viburnum', 'cornus', 'hedera', 'ilex', 'ligustrum', 'euonymus', 'rhamnus', 'sorbus', 'spiraea', 'potentilla', 'rosa', 'salvia', 'mentha', 'thymus', 'origanum', 'lavandula', 'rosemary', 'sage', 'basil', 'parsley', 'dill', 'coriander', 'cumin', 'fennel', 'anise', 'caraway', 'celery', 'chervil', 'tarragon', 'marjoram', 'oregano', 'bay', 'laurel', 'thyme', 'mint', 'catnip', 'lemon balm', 'spearmint', 'peppermint', 'bamboo', 'reed', 'rush', 'sedges', 'bulrush', 'cattail', 'lotus', 'waterlily', 'duckweed', 'alder', 'ash', 'aspen', 'beech', 'birch', 'cedar', 'cherry', 'chestnut', 'cottonwood', 'cypress', 'dogwood', 'elm', 'fir', 'hawthorn', 'hazel', 'hemlock', 'holly', 'hornbeam', 'juniper', 'larch', 'linden', 'maple', 'oak', 'olive', 'pine', 'plane', 'plum', 'poplar', 'redwood', 'rowan', 'sequoia', 'spruce', 'sycamore', 'walnut', 'willow', 'yew'
-              ];
-              const lowerName = name.toLowerCase();
-              const lowerClass = gbifClass.toLowerCase();
-              const lowerOrder = gbifOrder.toLowerCase();
-              const lowerFamily = gbifFamily.toLowerCase();
-              const lowerGenus = gbifGenus.toLowerCase();
-              if (
-                plantKeywords.some(kw =>
-                  lowerName.includes(kw) ||
-                  lowerClass.includes(kw) ||
-                  lowerOrder.includes(kw) ||
-                  lowerFamily.includes(kw) ||
-                  lowerGenus.includes(kw)
-                )
-              ) {
-                return false;
-              }
-              return name !== "Unknown";
-            })
-            .map((animal, idx) => {
-              // Type guards for iNaturalist, eBird, GBIF
-              let imageUrl = "";
-              if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0 && animal.photos[0].url) {
-                imageUrl = animal.photos[0].url.replace("square.", "medium.");
-              }
-              let name = "Unknown";
-              let sciName = "";
-              let desc = "";
-              if ('taxon' in animal && animal.taxon) {
-                const taxon = animal.taxon as INatTaxonFull;
-                name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
-                  ? taxon.preferred_common_name
-                  : taxon.name || "Unknown";
-                sciName = taxon.name || "";
-                desc = typeof taxon.wikipedia_summary === 'string' ? taxon.wikipedia_summary : "";
-              } else if ('ebirdCommon' in animal) {
-                name = animal.ebirdCommon || "Unknown";
-                sciName = 'sciName' in animal ? animal.sciName || "" : "";
-              } else if ('comName' in animal || 'sciName' in animal) {
-                name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
-                sciName = 'sciName' in animal ? animal.sciName || "" : "";
-              } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
-                name = animal.gbifSpecies || "Unknown";
-                sciName = animal.gbifScientific || "";
-                desc = [
-                  animal.gbifClass,
-                  animal.gbifOrder,
-                  animal.gbifFamily,
-                  animal.gbifGenus
-                ].filter(Boolean).join(", ");
-              }
-              // Title case for animal name
-              function toTitleCase(str: string) {
-                return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-              }
-              name = toTitleCase(name);
-              // Danger/poison keyword check
-              const dangerKeywords = [
-                "poison", "venom", "danger", "toxic", "bite", "sting", "attack", "aggressive", "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish", "mosquito", "wasp", "bee", "ant", "centipede", "millipede", "lethal", "predator", "disease", "infection", "injury"
-              ];
-              const lowerName = name.toLowerCase();
-              const lowerSci = sciName.toLowerCase();
-              const lowerDesc = desc.toLowerCase();
-              const isDangerous = dangerKeywords.some(kw => lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw));
-              // Rarity estimation
-              let rarity: 'common' | 'rare' = 'common';
-              if (lowerName.includes('rare') || lowerDesc.includes('rare') || lowerDesc.includes('endangered') || lowerDesc.includes('threatened')) {
-                rarity = 'rare';
-              }
-              // Generate a varied, paragraph-style description with randomization
-              let fullDesc = desc;
-              if (!fullDesc || fullDesc.split('.').length < 10) {
-                const templates = [
-                  [
-                    `${name} (${sciName}) is a fascinating animal species.`,
-                    `It is commonly found in various habitats and regions.`,
-                    `The scientific name for this animal is ${sciName}.`,
-                    `Many people are intrigued by the unique characteristics of the ${name}.`,
-                    `This animal plays an important role in its ecosystem.`,
-                    `Researchers have studied the ${name} to learn more about its behavior and adaptations.`,
-                    `Some individuals of this species can be identified by their distinct appearance.`,
-                    `The ${name} may interact with other animals and plants in its environment.`,
-                    `Conservation efforts are sometimes necessary to protect populations of ${name}.`,
-                    `Learning about the ${name} can help people appreciate biodiversity and nature.`
-                  ],
-                  [
-                    `Did you know? The ${name} (${sciName}) is known for its unique traits.`,
-                    `Its presence in the wild is a sign of a healthy ecosystem.`,
-                    `The ${name} has adapted to survive in diverse environments.`,
-                    `People often marvel at the beauty and behavior of the ${name}.`,
-                    `Scientists continue to discover new facts about ${name}.`,
-                    `The ${name} can be recognized by its ${desc ? desc : 'distinct features'}.`,
-                    `Protecting the ${name} is important for ecological balance.`,
-                    `You might spot the ${name} in forests, grasslands, or even near water.`,
-                    `The ${name} interacts with many other species in its habitat.`,
-                    `Learning about the ${name} inspires curiosity and respect for nature.`
-                  ],
-                  [
-                    `The ${name} (${sciName}) is a remarkable creature.`,
-                    `It thrives in its natural habitat, displaying amazing behaviors.`,
-                    `The scientific name, ${sciName}, reflects its classification.`,
-                    `Observers are often captivated by the ${name}'s appearance.`,
-                    `This animal contributes to the diversity of life on Earth.`,
-                    `Research on the ${name} reveals fascinating insights.`,
-                    `Distinctive markings or behaviors set the ${name} apart.`,
-                    `The ${name} is part of a complex web of life.`,
-                    `Efforts to conserve the ${name} benefit many other species.`,
-                    `Studying the ${name} helps us understand the natural world.`
-                  ]
-                ];
-                // Pick a random template and shuffle its sentences
-                const chosen = templates[Math.floor(Math.random() * templates.length)];
-                // Shuffle sentences for more variation
-                for (let i = chosen.length - 1; i > 0; i--) {
-                  const j = Math.floor(Math.random() * (i + 1));
-                  [chosen[i], chosen[j]] = [chosen[j], chosen[i]];
-                }
-                // If desc exists, add it as the last line
-                if (desc) chosen.push(desc);
-                fullDesc = chosen.join(' ');
-              }
-              return (
-                <div
-                  key={name + idx}
-                  className={`rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full ${isDangerous ? 'bg-red-700 bg-opacity-70' : 'bg-gray-800 bg-opacity-50'}`}
-                  style={{
-                    transition: 'background 0.3s',
-                    border: isDangerous ? '2px solid #ff0000' : '2px solid rgba(255,255,255,0.1)',
-                    boxShadow: isDangerous ? '0 0 16px 2px #ff0000' : '0 0 12px 2px rgba(255,255,255,0.1)',
-                    color: isDangerous ? '#fff' : undefined
-                  }}
-                  onClick={() => setSelectedAnimal({ name, sciName, desc: fullDesc, rarity, imageUrl, isDangerous })}
-                >
-                  <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
-                    {imageUrl ? (
-                      <Image src={imageUrl} alt={name} width={96} height={96} className="object-cover w-full h-full rounded-full" />
-                    ) : (
-                      <span className="text-gray-400 text-xs">No image</span>
-                    )}
-                  </div>
-                  <h2 className="text-lg md:text-xl font-semibold mb-1 text-center">{name}</h2>
-                  <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">Scientific Name: {sciName}</p>
-                  {desc && (
-                    <p className="text-gray-300 text-center mt-1 text-xs md:text-sm">{desc}</p>
-                  )}
-                  {isDangerous && (
-                    <p className="text-red-200 text-center mt-1 text-xs md:text-sm font-bold">Warning: This animal may be dangerous or poisonous!</p>
-                  )}
-                </div>
-              );
-            })}
-      {/* Animal Modal */}
-      {selectedAnimal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-white bg-opacity-90 rounded-xl shadow-2xl p-10 max-w-lg w-full relative flex flex-col items-center animate-fadein">
-            {/* Add Animal button in upper left if this is an added animal */}
-            {addAnimalCard && selectedAnimal.name === addAnimalCard.name && (
-              <button
-                className="absolute top-4 left-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold shadow active:animate-press"
-                style={{zIndex: 2}}
-                onClick={e => {
-                  e.currentTarget.classList.add('animate-press');
-                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                  // Save animal to savedAnimals
-                  setSavedAnimals(list => {
-                    if (list.some(a => a.name === selectedAnimal.name)) return list;
-                    return [...list, {
-                      name: selectedAnimal.name,
-                      sciName: selectedAnimal.sciName,
-                      desc: selectedAnimal.desc,
-                      imageUrl: selectedAnimal.imageUrl
-                    }];
-                  });
-                  alert('Animal added to Saved!');
-                }}
-              >Add Animal</button>
-            )}
-            <button
-              className="absolute top-4 right-4 text-gray-600 hover:text-black text-2xl font-bold active:animate-press"
-              onClick={e => {
-                e.currentTarget.classList.add('animate-press');
-                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
-                setSelectedAnimal(null);
-              }}
-            >
-              ×
-            </button>
-            {selectedAnimal.imageUrl ? (
-              <Image src={selectedAnimal.imageUrl} alt={selectedAnimal.name} width={160} height={160} className="object-cover rounded-full mb-4" />
-            ) : (
-              <div className="w-40 h-40 mb-4 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-gray-500">No image</span>
-              </div>
-            )}
-            <h2 className="text-2xl font-bold mb-2 text-center" style={{ color: '#111' }}>{selectedAnimal.name}</h2>
-            <p className="mb-2 text-center" style={{ color: '#222' }}>Scientific Name: {selectedAnimal.sciName}</p>
-            {/* Rarity scale */}
-            <div className="w-full flex items-center justify-center mb-4">
-              <span className="mr-2 text-sm" style={{ color: '#222' }}>Rarity:</span>
-              <div className="w-32 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-purple-700 flex items-center">
-                <div
-                  className="h-4 rounded-full"
-                  style={{
-                    width: selectedAnimal.rarity === 'rare' ? '80%' : '20%',
-                    background: selectedAnimal.rarity === 'rare' ? 'purple' : 'red',
-                    transition: 'width 0.3s',
-                  }}
-                />
-              </div>
-              <span className="ml-2 text-sm font-bold" style={{ color: selectedAnimal.rarity === 'rare' ? 'purple' : 'red' }}>
-                {selectedAnimal.rarity === 'rare' ? 'Rare' : 'Common'}
-              </span>
-            </div>
-            <p className="text-base leading-relaxed text-center mb-2" style={{ maxHeight: '350px', overflowY: 'auto', color: '#111' }}>{selectedAnimal.desc}</p>
-            {/* Special Facts Section */}
-            {selectedAnimal.facts && (
-              <div className="w-full mt-4 mb-2">
-                <h3 className="text-lg md:text-xl font-bold text-blue-700 mb-2 text-center">Special Facts</h3>
-                <ul className="list-disc list-inside text-left text-blue-800 text-base md:text-lg mb-4">
-                  {selectedAnimal.facts.map((fact: string, i: number) => (
-                    <li key={i} className="mb-2 md:mb-3">{fact}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {/* Danger reasons bullet points */}
-            {selectedAnimal.isDangerous && (
-              <div className="w-full mt-4 mb-2">
-                <h3 className="text-lg md:text-xl font-bold text-red-700 mb-2 text-center">Why is this animal dangerous?</h3>
-                <ul className="list-disc list-inside text-left text-red-800 text-base md:text-lg mb-4">
-                  {(() => {
-                    const reasons: string[] = [];
-                    const lowerName = selectedAnimal.name.toLowerCase();
-                    const lowerDesc = selectedAnimal.desc.toLowerCase();
-                    if (lowerName.includes('poison') || lowerDesc.includes('poison')) reasons.push('May be poisonous if touched or ingested.');
-                    if (lowerName.includes('venom') || lowerDesc.includes('venom')) reasons.push('May inject venom through bite or sting.');
-                    if (lowerDesc.includes('bite') || lowerName.includes('bite')) reasons.push('Can bite and cause injury.');
-                    if (lowerDesc.includes('sting') || lowerName.includes('sting')) reasons.push('Can sting and cause pain or allergic reaction.');
-                    if (lowerDesc.includes('attack') || lowerName.includes('attack')) reasons.push('Known to attack when threatened.');
-                    if (lowerDesc.includes('aggressive') || lowerName.includes('aggressive')) reasons.push('Has aggressive behavior.');
-                    if (lowerDesc.includes('deadly') || lowerName.includes('deadly')) reasons.push('Can be deadly to humans.');
-                    if (lowerDesc.includes('harm') || lowerName.includes('harm')) reasons.push('Can cause harm to humans.');
-                    if (lowerDesc.includes('fatal') || lowerName.includes('fatal')) reasons.push('May cause fatal injuries or illness.');
-                    if (lowerDesc.includes('rabies') || lowerName.includes('rabies')) reasons.push('May carry rabies.');
-                    if (lowerName.includes('scorpion')) reasons.push('Scorpions have venomous stings.');
-      {/* Main content toggle: Search or Saved Animals */}
+      {/* Main Content Toggle: Search or Saved Animals */}
       {!showSaved ? (
         <div className="flex flex-col items-center mt-6 mb-10 z-10 relative">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">Animal Explorer</h1>
+          
           {/* Location Search Bar */}
           <form onSubmit={handleLocationSearch} className="flex flex-col items-center w-full max-w-xs md:max-w-md mb-4 gap-2">
             {searchError && (
@@ -977,177 +858,95 @@ export default function HomePage() {
             <input
               type="text"
               value={location}
-              onChange={e => setLocation(e.target.value)}
+              onChange={(e) => setLocation(e.target.value)}
               placeholder="Enter your location (city, address, etc.)"
               className="px-3 py-1.5 rounded w-full bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-blue-500 mb-1 text-sm md:text-base"
               required
             />
-            <button type="submit" className="bg-blue-500 text-white px-3 py-1.5 rounded w-full hover:bg-blue-600 text-sm md:text-base" disabled={loading}>
+            <button 
+              type="submit" 
+              className="bg-blue-500 text-white px-3 py-1.5 rounded w-full hover:bg-blue-600 text-sm md:text-base disabled:bg-gray-500" 
+              disabled={loading}
+            >
               {loading ? "Searching..." : "Find Animals Near Me"}
             </button>
           </form>
+          
           {coords && (
-            <p className="text-gray-400 mb-2 text-sm md:text-base">Showing animals within {searchRange} {searchUnit} of <span className="font-semibold">{location}</span></p>
+            <p className="text-gray-400 mb-2 text-sm md:text-base">
+              Showing animals within {searchRange} {searchUnit} of <span className="font-semibold">{location}</span>
+            </p>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          
+          {/* Animal Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4">
             {filteredAnimals.length === 0 && coords && !loading && (
-              <p className="text-gray-400 col-span-3 text-sm">No animals found within 8 miles of this location.</p>
+              <p className="text-gray-400 col-span-full text-sm text-center">No animals found within {searchRange} {searchUnit} of this location.</p>
             )}
-            {filteredAnimals
-              .filter(animal => {
-                // ...existing code...
-                let name = "Unknown";
-                let gbifClass = "";
-                let gbifOrder = "";
-                let gbifFamily = "";
-                let gbifGenus = "";
-                if ('taxon' in animal && animal.taxon) {
-                  const taxon = animal.taxon as INatTaxonFull;
-                  name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
-                    ? taxon.preferred_common_name
-                    : taxon.name || "Unknown";
-                } else if ('ebirdCommon' in animal) {
-                  name = animal.ebirdCommon || "Unknown";
-                } else if ('comName' in animal || 'sciName' in animal) {
-                  name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
-                } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
-                  name = animal.gbifSpecies || "Unknown";
-                  gbifClass = animal.gbifClass || "";
-                  gbifOrder = animal.gbifOrder || "";
-                  gbifFamily = animal.gbifFamily || "";
-                  gbifGenus = animal.gbifGenus || "";
-                }
-                // ...existing code...
-                function toTitleCase(str: string) {
-                  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-                }
-                name = toTitleCase(name);
-                // ...existing code...
-                const plantKeywords = [
-                  // ...existing code...
-                ];
-                const lowerName = name.toLowerCase();
-                const lowerClass = gbifClass.toLowerCase();
-                const lowerOrder = gbifOrder.toLowerCase();
-                const lowerFamily = gbifFamily.toLowerCase();
-                const lowerGenus = gbifGenus.toLowerCase();
-                if (
-                  plantKeywords.some(kw =>
-                    lowerName.includes(kw) ||
-                    lowerClass.includes(kw) ||
-                    lowerOrder.includes(kw) ||
-                    lowerFamily.includes(kw) ||
-                    lowerGenus.includes(kw)
-                  )
-                ) {
-                  return false;
-                }
-                return name !== "Unknown";
-              })
-              .map((animal, idx) => {
-                // ...existing code...
-                let imageUrl = "";
-                if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0 && animal.photos[0].url) {
-                  imageUrl = animal.photos[0].url.replace("square.", "medium.");
-                }
-                let name = "Unknown";
-                let sciName = "";
-                let desc = "";
-                if ('taxon' in animal && animal.taxon) {
-                  const taxon = animal.taxon as INatTaxonFull;
-                  name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
-                    ? taxon.preferred_common_name
-                    : taxon.name || "Unknown";
-                  sciName = taxon.name || "";
-                  desc = typeof taxon.wikipedia_summary === 'string' ? taxon.wikipedia_summary : "";
-                } else if ('ebirdCommon' in animal) {
-                  name = animal.ebirdCommon || "Unknown";
-                  sciName = 'sciName' in animal ? animal.sciName || "" : "";
-                } else if ('comName' in animal || 'sciName' in animal) {
-                  name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
-                  sciName = 'sciName' in animal ? animal.sciName || "" : "";
-                } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
-                  name = animal.gbifSpecies || "Unknown";
-                  sciName = animal.gbifScientific || "";
-                  desc = [
-                    animal.gbifClass,
-                    animal.gbifOrder,
-                    animal.gbifFamily,
-                    animal.gbifGenus
-                  ].filter(Boolean).join(", ");
-                }
-                // ...existing code...
-                function toTitleCase(str: string) {
-                  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-                }
-                name = toTitleCase(name);
-                // ...existing code...
-                const dangerKeywords = [
-                  // ...existing code...
-                ];
-                const lowerName = name.toLowerCase();
-                const lowerSci = sciName.toLowerCase();
-                const lowerDesc = desc.toLowerCase();
-                const isDangerous = dangerKeywords.some(kw => lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw));
-                let rarity: 'common' | 'rare' = 'common';
-                if (lowerName.includes('rare') || lowerDesc.includes('rare') || lowerDesc.includes('endangered') || lowerDesc.includes('threatened')) {
-                  rarity = 'rare';
-                }
-                let fullDesc = desc;
-                if (!fullDesc || fullDesc.split('.').length < 10) {
-                  const templates = [
-                    // ...existing code...
-                  ];
-                  const chosen = templates[Math.floor(Math.random() * templates.length)];
-                  for (let i = chosen.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [chosen[i], chosen[j]] = [chosen[j], chosen[i]];
-                  }
-                  if (desc) chosen.push(desc);
-                  fullDesc = chosen.join(' ');
-                }
-                return (
-                  <div
-                    key={name + idx}
-                    className={`rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full ${isDangerous ? 'bg-red-700 bg-opacity-70' : 'bg-gray-800 bg-opacity-50'}`}
-                    style={{
-                      transition: 'background 0.3s',
-                      border: isDangerous ? '2px solid #ff0000' : '2px solid rgba(255,255,255,0.1)',
-                      boxShadow: isDangerous ? '0 0 16px 2px #ff0000' : '0 0 12px 2px rgba(255,255,255,0.1)',
-                      color: isDangerous ? '#fff' : undefined
-                    }}
-                    onClick={() => setSelectedAnimal({ name, sciName, desc: fullDesc, rarity, imageUrl, isDangerous })}
-                  >
-                    <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
-                      {imageUrl ? (
-                        <Image src={imageUrl} alt={name} width={96} height={96} className="object-cover w-full h-full rounded-full" />
-                      ) : (
-                        <span className="text-gray-400 text-xs">No image</span>
-                      )}
-                    </div>
-                    <h2 className="text-lg md:text-xl font-semibold mb-1 text-center">{name}</h2>
-                    <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">Scientific Name: {sciName}</p>
-                    {desc && (
-                      <p className="text-gray-300 text-center mt-1 text-xs md:text-sm">{desc}</p>
-                    )}
-                    {isDangerous && (
-                      <p className="text-red-200 text-center mt-1 text-xs md:text-sm font-bold">Warning: This animal may be dangerous or poisonous!</p>
+            
+            {filteredAnimals.map((animal, idx) => {
+              const processedAnimal = processAnimalData(animal, idx);
+              return (
+                <div
+                  key={processedAnimal.key}
+                  className={`rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full transition-all duration-300 hover:scale-105 ${
+                    processedAnimal.isDangerous 
+                      ? 'bg-red-700 bg-opacity-70 border-2 border-red-500' 
+                      : 'bg-gray-800 bg-opacity-50 border-2 border-gray-600'
+                  }`}
+                  style={{
+                    boxShadow: processedAnimal.isDangerous 
+                      ? '0 0 16px 2px #ff0000' 
+                      : '0 0 12px 2px rgba(255,255,255,0.1)',
+                  }}
+                  onClick={() => setSelectedAnimal({
+                    name: processedAnimal.name,
+                    sciName: processedAnimal.sciName,
+                    desc: processedAnimal.desc,
+                    rarity: processedAnimal.rarity,
+                    imageUrl: processedAnimal.imageUrl,
+                    isDangerous: processedAnimal.isDangerous
+                  })}
+                >
+                  <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
+                    {processedAnimal.imageUrl ? (
+                      <Image 
+                        src={processedAnimal.imageUrl} 
+                        alt={processedAnimal.name} 
+                        width={96} 
+                        height={96} 
+                        className="object-cover w-full h-full rounded-full" 
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-xs">No image</span>
                     )}
                   </div>
-                );
-              })}
+                  <h2 className="text-lg md:text-xl font-semibold mb-1 text-center">{processedAnimal.name}</h2>
+                  <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">
+                    Scientific Name: {processedAnimal.sciName}
+                  </p>
+                  {processedAnimal.isDangerous && (
+                    <p className="text-red-200 text-center mt-1 text-xs md:text-sm font-bold">
+                      ⚠️ Warning: This animal may be dangerous!
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : (
+        /* Saved Animals View */
         <div className="flex flex-col items-center mt-6 mb-10 z-10 relative">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">Saved Animals</h1>
           {savedAnimals.length === 0 ? (
             <p className="text-gray-400 text-center">No animals saved yet. Add animals using the + button!</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4">
               {savedAnimals.map((animal, idx) => (
                 <div
                   key={animal.name + idx}
-                  className="rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full bg-gray-800 bg-opacity-90"
+                  className="rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full bg-gray-800 bg-opacity-90 transition-all duration-300 hover:scale-105"
                   style={{ border: '2px solid #4ade80', boxShadow: '0 0 16px 2px #4ade80', color: '#fff' }}
                   onClick={() => setSelectedAnimal({
                     name: animal.name,
@@ -1159,14 +958,27 @@ export default function HomePage() {
                   })}
                 >
                   <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
-                    <Image src={animal.imageUrl} alt={animal.name} width={96} height={96} className="object-cover w-full h-full rounded-full" />
+                    <Image 
+                      src={animal.imageUrl} 
+                      alt={animal.name} 
+                      width={96} 
+                      height={96} 
+                      className="object-cover w-full h-full rounded-full" 
+                    />
                   </div>
                   <h2 className="text-lg md:text-xl font-semibold mb-1 text-center">{animal.name}</h2>
-                  <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">Scientific Name: {animal.sciName}</p>
-                  <p className="text-gray-300 text-center mt-1 text-xs md:text-sm">{animal.desc}</p>
+                  <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">
+                    Scientific Name: {animal.sciName}
+                  </p>
+                  <p className="text-gray-300 text-center mt-1 text-xs md:text-sm line-clamp-3">
+                    {animal.desc}
+                  </p>
                 </div>
               ))}
             </div>
           )}
         </div>
       )}
+    </div>
+  );
+}
