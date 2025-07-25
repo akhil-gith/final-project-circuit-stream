@@ -187,7 +187,7 @@ export default function HomePage() {
             onClick={() => setShowHelp(true)}
             title="Help / Tutorial"
           >
-            Help
+            ❓
           </button>
           <button
             className="bg-blue-500 text-white px-3 py-2 rounded shadow hover:bg-blue-600 font-bold animate-fadein"
@@ -200,7 +200,7 @@ export default function HomePage() {
         <div className="flex items-center space-x-4">
           {/* Settings button for all users */}
           <button
-            className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2"
+            className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2 text-xl"
             onClick={() => {
               setEditName(user?.name || "");
               setEditPassword(user?.password || "");
@@ -208,7 +208,7 @@ export default function HomePage() {
             }}
             title="Settings"
           >
-            <span className="material-icons text-gray-700">settings</span>
+            ⚙️
           </button>
           {!user ? (
             <>
