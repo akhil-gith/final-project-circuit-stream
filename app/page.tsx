@@ -197,52 +197,54 @@ export default function HomePage() {
             Feedback
           </button>
         </div>
-        {!user ? (
-          <>
-            <button
-              className="bg-white text-black px-4 py-2 rounded mr-2 hover:bg-gray-200"
-              onClick={() => setShowAuth('login')}
-            >
-              Log In
-            </button>
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              onClick={() => setShowAuth('signup')}
-            >
-              Sign Up
-            </button>
-          </>
-        ) : (
-          <div className="flex items-center space-x-4">
-            {/* Custom profile logo */}
-            {user.photoUrl ? (
-              <Image src={user.photoUrl} alt="Profile" width={32} height={32} className="rounded-full border-2 border-blue-400 shadow-lg animate-swoosh" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-green-400 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">{user.name ? user.name[0].toUpperCase() : 'U'}</span>
-              </div>
-            )}
-            <span className="font-semibold">{user.name}</span>
-            {/* Settings icon - make button white */}
-            <button
-              className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300"
-              onClick={() => {
-                setEditName(user.name);
-                setEditPassword(user.password || "");
-                setShowSettings(true);
-              }}
-              title="Settings"
-            >
-              <span className="material-icons text-gray-700">settings</span>
-            </button>
-            <button
-              className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200"
-              onClick={() => setUser(null)}
-            >
-              Log Out
-            </button>
-          </div>
-        )}
+        <div className="flex items-center space-x-4">
+          {/* Settings button for all users */}
+          <button
+            className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2"
+            onClick={() => {
+              setEditName(user?.name || "");
+              setEditPassword(user?.password || "");
+              setShowSettings(true);
+            }}
+            title="Settings"
+          >
+            <span className="material-icons text-gray-700">settings</span>
+          </button>
+          {!user ? (
+            <>
+              <button
+                className="bg-white text-black px-4 py-2 rounded mr-2 hover:bg-gray-200"
+                onClick={() => setShowAuth('login')}
+              >
+                Log In
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={() => setShowAuth('signup')}
+              >
+                Sign Up
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Custom profile logo */}
+              {user.photoUrl ? (
+                <Image src={user.photoUrl} alt="Profile" width={32} height={32} className="rounded-full border-2 border-blue-400 shadow-lg animate-swoosh" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-green-400 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">{user.name ? user.name[0].toUpperCase() : 'U'}</span>
+                </div>
+              )}
+              <span className="font-semibold">{user.name}</span>
+              <button
+                className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200"
+                onClick={() => setUser(null)}
+              >
+                Log Out
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Auth Modal - direct child, highest z-index */}
