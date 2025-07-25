@@ -447,15 +447,14 @@ export default function HomePage() {
           <div className="w-full h-full rounded-2xl border-8 border-white border-opacity-30 bg-white bg-opacity-10 shadow-2xl" style={{boxShadow: '0 0 32px 8px rgba(255,255,255,0.2)'}}>
             {/* Use static OpenStreetMap marker images for better visibility */}
             <div className="w-full h-full rounded-2xl relative" style={{ minHeight: '384px' }}>
-              <Image
+              <img
                 src={`https://staticmap.openstreetmap.de/staticmap.php?center=${coords ? coords.lat + ',' + coords.lon : '51.505,-0.09'}&zoom=12&size=800x384${coords ? `&markers=${coords.lat},${coords.lon},lightblue1` : ''}${allLocations.length > 0 ? `&markers=${allLocations.map(loc => loc.lat + ',' + loc.lon + ',red').join('|')}` : ''}`}
                 alt="Animal Map"
                 width={800}
                 height={384}
                 className="absolute top-0 left-0 w-full h-full object-cover rounded-2xl"
                 style={{ border: 'none', background: 'transparent' }}
-                priority
-                unoptimized
+                loading="eager"
               />
             </div>
           </div>
