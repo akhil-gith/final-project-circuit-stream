@@ -167,8 +167,8 @@ export default function HomePage() {
       </video>
 
       {/* Top bar with Help/Feedback and Login/Signup or Profile */}
-      <div className="absolute top-0 left-0 w-full flex justify-end items-center p-4 z-[100]" style={{background: 'transparent'}}>
-        <div className="flex flex-col items-end mr-4 gap-2">
+      <div className="absolute top-0 left-0 w-full flex justify-end items-center p-4 z-[100] pointer-events-none" style={{background: 'transparent'}}>
+        <div className="flex flex-col items-end mr-4 gap-2 pointer-events-auto">
           <button
             className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein active:animate-press"
             onClick={e => {
@@ -192,7 +192,7 @@ export default function HomePage() {
             Feedback
           </button>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 pointer-events-auto">
           {/* Settings button for all users */}
           <button
             className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2 text-xl active:animate-press"
@@ -500,6 +500,9 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Spacer to prevent overlap with About section */}
+      <div className="h-28 md:h-32 lg:h-36" />
 
       {/* About Section */}
       <div className="flex flex-col items-center mt-8 mb-8 z-10 relative">
