@@ -109,11 +109,15 @@ export default function HomePage() {
     setTimeout(() => element.classList.remove('animate-press'), 300);
   };
 
-  // Plant keywords for filtering
+  // Expanded plant keywords for better filtering
   const plantKeywords = [
     'plant', 'tree', 'flower', 'grass', 'herb', 'shrub', 'bush', 'fungi', 'moss', 'algae', 
     'lichen', 'fern', 'pinophyta', 'magnoliophyta', 'poaceae', 'fabaceae', 'rosaceae', 
-    'asteraceae', 'cactaceae', 'orchidaceae', 'solanaceae', 'brassicaceae', 'lamiaceae'
+    'asteraceae', 'cactaceae', 'orchidaceae', 'solanaceae', 'brassicaceae', 'lamiaceae',
+    'plantae', 'flora', 'fungus', 'mushroom', 'seed', 'leaf', 'root', 'stem', 'bark',
+    'pine', 'oak', 'maple', 'cedar', 'willow', 'birch', 'palm', 'cypress', 'spruce',
+    'daisy', 'rose', 'lily', 'tulip', 'sunflower', 'orchid', 'violet', 'iris',
+    'bryophyta', 'pteridophyta', 'gymnospermae', 'angiospermae', 'monocot', 'dicot'
   ];
 
   // Danger keywords for safety detection
@@ -122,6 +126,12 @@ export default function HomePage() {
     "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", 
     "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish"
   ];
+
+  // Generate a comprehensive description for added animals
+  const generateAnimalDescription = (animalName: string): string => {
+    const name = toTitleCase(animalName);
+    return `${name} is a fascinating animal species that plays an important role in its natural ecosystem. These animals have evolved unique characteristics and behaviors that help them survive in their environment. ${name} can be found in various habitats around the world, where they contribute to the biodiversity and ecological balance. Studying ${name} helps us understand wildlife conservation needs and the interconnected nature of ecosystems. Each individual ${name} has adapted remarkable features that make them well-suited to their specific lifestyle and environmental challenges.`;
+  };
 
   // Main search function
   const handleLocationSearch = async (e: React.FormEvent) => {
@@ -229,17 +239,20 @@ export default function HomePage() {
     const input = addAnimalInput.trim();
     if (!input) return;
 
+    const animalName = toTitleCase(input);
+    const description = generateAnimalDescription(animalName);
+
     setAddAnimalCard({
-      name: input,
-      sciName: input,
-      desc: `No description available for ${input}.`,
+      name: animalName,
+      sciName: animalName, // Using the same name as scientific name for user-added animals
+      desc: description,
       imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=256&h=256&q=80"
     });
     setShowAddAnimal(false);
     setAddAnimalInput("");
   };
 
-  // Filter animals (remove plants)
+  // Enhanced filter animals function (remove plants more effectively)
   const filterAnimals = (animals: Sighting[]) => {
     return animals.filter(animal => {
       let name = "Unknown";
@@ -247,6 +260,7 @@ export default function HomePage() {
       let gbifOrder = "";
       let gbifFamily = "";
       let gbifGenus = "";
+      let gbifScientific = "";
 
       if ('taxon' in animal && animal.taxon) {
         const taxon = animal.taxon as INatTaxonFull;
@@ -259,6 +273,7 @@ export default function HomePage() {
         gbifOrder = animal.gbifOrder || "";
         gbifFamily = animal.gbifFamily || "";
         gbifGenus = animal.gbifGenus || "";
+        gbifScientific = animal.gbifScientific || "";
       }
 
       name = toTitleCase(name);
@@ -267,17 +282,27 @@ export default function HomePage() {
       const lowerOrder = gbifOrder.toLowerCase();
       const lowerFamily = gbifFamily.toLowerCase();
       const lowerGenus = gbifGenus.toLowerCase();
+      const lowerScientific = gbifScientific.toLowerCase();
 
-      // Filter out plants
+      // Enhanced plant filtering - check all relevant fields
       const isPlant = plantKeywords.some(kw =>
         lowerName.includes(kw) ||
         lowerClass.includes(kw) ||
         lowerOrder.includes(kw) ||
         lowerFamily.includes(kw) ||
-        lowerGenus.includes(kw)
+        lowerGenus.includes(kw) ||
+        lowerScientific.includes(kw)
       );
 
-      return !isPlant && name !== "Unknown";
+      // Additional specific plant class filtering
+      const isPlantClass = [
+        'plantae', 'fungi', 'chromista', 'bacteria', 'archaea'
+      ].some(plantClass => 
+        lowerClass.includes(plantClass) || 
+        lowerScientific.includes(plantClass)
+      );
+
+      return !isPlant && !isPlantClass && name !== "Unknown";
     });
   };
 
@@ -476,12 +501,27 @@ export default function HomePage() {
               }}
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-center">Add Animal by Name</h2>
+            
+            {/* Warning Message */}
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-4 rounded w-full">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <span className="text-yellow-500 text-lg">⚠️</span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium">
+                    Please add a specific animal. For example, don't say "Bear", say "Polar Bear".
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <form onSubmit={handleAddAnimalSubmit} className="w-full flex flex-col gap-4">
               <input
                 type="text"
                 value={addAnimalInput}
                 onChange={(e) => setAddAnimalInput(e.target.value)}
-                placeholder="Enter animal name"
+                placeholder="Enter specific animal name (e.g., Polar Bear)"
                 className="border px-3 py-2 rounded w-full"
                 required
                 autoFocus
@@ -514,7 +554,7 @@ export default function HomePage() {
             </div>
             <h2 className="text-lg font-semibold mb-1 text-center">{addAnimalCard.name}</h2>
             <p className="text-gray-400 mb-0.5 text-xs text-center">Scientific Name: {addAnimalCard.sciName}</p>
-            <p className="text-gray-300 text-center mt-1 text-xs">{addAnimalCard.desc}</p>
+            <p className="text-gray-300 text-center mt-1 text-xs line-clamp-3">{addAnimalCard.desc}</p>
             <span className="absolute top-2 right-2 text-gray-400 text-xl font-bold">+</span>
             <span className="text-green-300 text-xs mt-2">Tap to view details</span>
           </div>
@@ -532,94 +572,6 @@ export default function HomePage() {
               ×
             </button>
             <h2 className="text-xl font-bold mb-4">{showAuth === 'login' ? 'Log In' : 'Sign Up'}</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.target as HTMLFormElement;
-                const name = (form.elements.namedItem('name') as HTMLInputElement)?.value || '';
-                const email = (form.elements.namedItem('email') as HTMLInputElement)?.value || '';
-                setUser({ name, email });
-                setShowAuth(null);
-              }}
-            >
-              {showAuth === 'signup' && (
-                <input
-                  name="name"
-                  type="text"
-                  placeholder="Name"
-                  className="border px-3 py-2 rounded w-full mb-3"
-                  required
-                />
-              )}
-              <input
-                name="email"
-                type="email"
-                placeholder="Email"
-                className="border px-3 py-2 rounded w-full mb-3"
-                required
-              />
-              <input
-                name="password"
-                type="password"
-                placeholder="Password"
-                className="border px-3 py-2 rounded w-full mb-4"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600 mb-2"
-              >
-                {showAuth === 'login' ? 'Log In' : 'Sign Up'}
-              </button>
-            </form>
-            <button
-              className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100"
-              onClick={() => {
-                setUser({ name: 'Google User', email: 'user@gmail.com', photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' });
-                setShowAuth(null);
-              }}
-            >
-              Continue with Google
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-sm w-full relative flex flex-col items-center">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
-              onClick={() => setShowLogoutConfirm(false)}
-            >×</button>
-            <h2 className="text-xl font-bold mb-4 text-center">Are you sure you want to log out?</h2>
-            <div className="flex gap-4 mt-2">
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded font-bold hover:bg-red-600"
-                onClick={() => {
-                  setUser(null);
-                  setShowLogoutConfirm(false);
-                }}
-              >Log Out</button>
-              <button
-                className="bg-gray-300 text-black px-4 py-2 rounded font-bold hover:bg-gray-400"
-                onClick={() => setShowLogoutConfirm(false)}
-              >Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[350px] relative flex flex-col items-center">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
-              onClick={() => setShowSettings(false)}
-            >×</button>
-            <h2 className="text-xl font-bold mb-4">Settings</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1004,4 +956,92 @@ export default function HomePage() {
       )}
     </div>
   );
-}
+}) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const name = (form.elements.namedItem('name') as HTMLInputElement)?.value || '';
+                const email = (form.elements.namedItem('email') as HTMLInputElement)?.value || '';
+                setUser({ name, email });
+                setShowAuth(null);
+              }}
+            >
+              {showAuth === 'signup' && (
+                <input
+                  name="name"
+                  type="text"
+                  placeholder="Name"
+                  className="border px-3 py-2 rounded w-full mb-3"
+                  required
+                />
+              )}
+              <input
+                name="email"
+                type="email"
+                placeholder="Email"
+                className="border px-3 py-2 rounded w-full mb-3"
+                required
+              />
+              <input
+                name="password"
+                type="password"
+                placeholder="Password"
+                className="border px-3 py-2 rounded w-full mb-4"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600 mb-2"
+              >
+                {showAuth === 'login' ? 'Log In' : 'Sign Up'}
+              </button>
+            </form>
+            <button
+              className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100"
+              onClick={() => {
+                setUser({ name: 'Google User', email: 'user@gmail.com', photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' });
+                setShowAuth(null);
+              }}
+            >
+              Continue with Google
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-sm w-full relative flex flex-col items-center">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowLogoutConfirm(false)}
+            >×</button>
+            <h2 className="text-xl font-bold mb-4 text-center">Are you sure you want to log out?</h2>
+            <div className="flex gap-4 mt-2">
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded font-bold hover:bg-red-600"
+                onClick={() => {
+                  setUser(null);
+                  setShowLogoutConfirm(false);
+                }}
+              >Log Out</button>
+              <button
+                className="bg-gray-300 text-black px-4 py-2 rounded font-bold hover:bg-gray-400"
+                onClick={() => setShowLogoutConfirm(false)}
+              >Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[350px] relative flex flex-col items-center">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowSettings(false)}
+            >×</button>
+            <h2 className="text-xl font-bold mb-4">Settings</h2>
+            <form
+              onSubmit={(e
