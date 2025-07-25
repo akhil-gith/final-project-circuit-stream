@@ -548,8 +548,8 @@ export default function HomePage() {
             {/* Danger reasons bullet points */}
             {selectedAnimal.isDangerous && (
               <div className="w-full mt-4 mb-2">
-                <h3 className="text-lg font-bold text-red-700 mb-2 text-center">Why is this animal dangerous?</h3>
-                <ul className="list-disc list-inside text-left text-red-800 text-base mb-4">
+                <h3 className="text-lg md:text-xl font-bold text-red-700 mb-2 text-center">Why is this animal dangerous?</h3>
+                <ul className="list-disc list-inside text-left text-red-800 text-base md:text-lg mb-4">
                   {(() => {
                     const reasons: string[] = [];
                     const lowerName = selectedAnimal.name.toLowerCase();
@@ -583,18 +583,18 @@ export default function HomePage() {
                     if (lowerDesc.includes('infection')) reasons.push('Can cause infection if bitten or stung.');
                     if (lowerDesc.includes('injury')) reasons.push('Can cause serious injury.');
                     if (reasons.length === 0) reasons.push('Known to be dangerous or harmful to humans.');
-                    return reasons.map((reason, i) => <li key={i}>{reason}</li>);
+                    return reasons.map((reason, i) => <li key={i} className="mb-2 md:mb-3">{reason}</li>);
                   })()}
                 </ul>
                 <div className="flex flex-col items-center w-full mt-6">
-                  <h4 className="text-md font-bold text-gray-800 mb-2 text-center">Encountered this Animal? Recommended Safety Resources:</h4>
-                  <ul className="w-full flex flex-col gap-2">
+                  <h4 className="text-md md:text-lg font-bold text-gray-800 mb-4 text-center">Encountered this Animal? Recommended Safety Resources:</h4>
+                  <ul className="w-full flex flex-col gap-3 md:gap-4">
                     <li>
                       <a
                         href="https://www.nwf.org/Educational-Resources/Wildlife-Guide/Safety-Tips"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full block bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
+                        className="w-full block bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 md:py-4 md:px-8 rounded shadow-lg text-base md:text-lg transition-colors animate-fadein text-center"
                       >
                         Wildlife Safety Tips (NWF)
                       </a>
@@ -604,7 +604,7 @@ export default function HomePage() {
                         href="https://www.cdc.gov/niosh/topics/wildlife/default.html"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full block bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
+                        className="w-full block bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-3 px-4 md:py-4 md:px-8 rounded shadow-lg text-base md:text-lg transition-colors animate-fadein text-center"
                       >
                         CDC: Animal Encounter Safety
                       </a>
@@ -614,7 +614,7 @@ export default function HomePage() {
                         href="https://www.fs.usda.gov/visit/know-before-you-go/wildlife-safety"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full block bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
+                        className="w-full block bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-4 md:py-4 md:px-8 rounded shadow-lg text-base md:text-lg transition-colors animate-fadein text-center"
                       >
                         USDA: Wildlife Safety Guide
                       </a>
