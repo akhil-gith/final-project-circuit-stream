@@ -180,7 +180,7 @@ export default function HomePage() {
       </video>
 
       {/* Top bar with Help/Feedback and Login/Signup or Profile */}
-      <div className="w-full flex justify-end items-center p-4 z-20 relative">
+      <div className="absolute top-0 left-0 w-full flex justify-end items-center p-4 z-[100]" style={{background: 'rgba(0,0,0,0.25)'}}>
         <div className="flex flex-col items-end mr-4 gap-2">
           <button
             className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein"
