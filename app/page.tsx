@@ -149,8 +149,6 @@ export default function HomePage() {
   }
   // Use all sightings as animals to display
   const filteredAnimals = sightings;
-  // Map markers for sightings
-  const allLocations = sightings.map(s => ({ lat: s.geojson.coordinates[1], lon: s.geojson.coordinates[0] }));
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
