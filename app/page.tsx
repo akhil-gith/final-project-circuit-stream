@@ -545,16 +545,57 @@ export default function HomePage() {
               </span>
             </div>
             <p className="text-base leading-relaxed text-center mb-2" style={{ maxHeight: '350px', overflowY: 'auto', color: '#111' }}>{selectedAnimal.desc}</p>
-            {/* Encountered this Animal button for dangerous animals */}
+            {/* Danger reasons bullet points */}
             {selectedAnimal.isDangerous && (
-              <a
-                href={`https://www.google.com/search?q=what+to+do+when+you+encounter+a+${encodeURIComponent(selectedAnimal.name)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors"
-              >
-                Encountered this Animal?
-              </a>
+              <div className="w-full mt-4 mb-2">
+                <h3 className="text-lg font-bold text-red-700 mb-2 text-center">Why is this animal dangerous?</h3>
+                <ul className="list-disc list-inside text-left text-red-800 text-base">
+                  {(() => {
+                    const reasons: string[] = [];
+                    const lowerName = selectedAnimal.name.toLowerCase();
+                    const lowerSci = selectedAnimal.sciName.toLowerCase();
+                    const lowerDesc = selectedAnimal.desc.toLowerCase();
+                    if (lowerName.includes('poison') || lowerDesc.includes('poison')) reasons.push('May be poisonous if touched or ingested.');
+                    if (lowerName.includes('venom') || lowerDesc.includes('venom')) reasons.push('May inject venom through bite or sting.');
+                    if (lowerDesc.includes('bite') || lowerName.includes('bite')) reasons.push('Can bite and cause injury.');
+                    if (lowerDesc.includes('sting') || lowerName.includes('sting')) reasons.push('Can sting and cause pain or allergic reaction.');
+                    if (lowerDesc.includes('attack') || lowerName.includes('attack')) reasons.push('Known to attack when threatened.');
+                    if (lowerDesc.includes('aggressive') || lowerName.includes('aggressive')) reasons.push('Has aggressive behavior.');
+                    if (lowerDesc.includes('deadly') || lowerName.includes('deadly')) reasons.push('Can be deadly to humans.');
+                    if (lowerDesc.includes('harm') || lowerName.includes('harm')) reasons.push('Can cause harm to humans.');
+                    if (lowerDesc.includes('fatal') || lowerName.includes('fatal')) reasons.push('May cause fatal injuries or illness.');
+                    if (lowerDesc.includes('rabies') || lowerName.includes('rabies')) reasons.push('May carry rabies.');
+                    if (lowerName.includes('scorpion')) reasons.push('Scorpions have venomous stings.');
+                    if (lowerName.includes('snake')) reasons.push('Snakes may be venomous and bite.');
+                    if (lowerName.includes('spider')) reasons.push('Spiders may inject venom through bites.');
+                    if (lowerName.includes('shark')) reasons.push('Sharks can bite and cause serious injury.');
+                    if (lowerName.includes('bear')) reasons.push('Bears are large and can attack if provoked.');
+                    if (lowerName.includes('wolf')) reasons.push('Wolves may attack in packs.');
+                    if (lowerName.includes('lion')) reasons.push('Lions are powerful predators.');
+                    if (lowerName.includes('tiger')) reasons.push('Tigers are strong and can attack humans.');
+                    if (lowerName.includes('crocodile') || lowerName.includes('alligator')) reasons.push('Crocodiles and alligators can bite and drag prey.');
+                    if (lowerName.includes('jellyfish')) reasons.push('Jellyfish stings can be painful and toxic.');
+                    if (lowerName.includes('mosquito')) reasons.push('Mosquitoes can transmit diseases.');
+                    if (lowerName.includes('wasp') || lowerName.includes('bee') || lowerName.includes('ant')) reasons.push('Stings may cause allergic reactions.');
+                    if (lowerName.includes('centipede') || lowerName.includes('millipede')) reasons.push('Some centipedes and millipedes have venomous bites.');
+                    if (lowerDesc.includes('lethal')) reasons.push('Can be lethal to humans.');
+                    if (lowerDesc.includes('predator')) reasons.push('Is a natural predator and may attack.');
+                    if (lowerDesc.includes('disease')) reasons.push('May transmit diseases.');
+                    if (lowerDesc.includes('infection')) reasons.push('Can cause infection if bitten or stung.');
+                    if (lowerDesc.includes('injury')) reasons.push('Can cause serious injury.');
+                    if (reasons.length === 0) reasons.push('Known to be dangerous or harmful to humans.');
+                    return reasons.map((reason, i) => <li key={i}>{reason}</li>);
+                  })()}
+                </ul>
+                <a
+                  href={`https://www.google.com/search?q=what+to+do+when+you+encounter+a+${encodeURIComponent(selectedAnimal.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein"
+                >
+                  Encountered this Animal?
+                </a>
+              </div>
             )}
           </div>
         </div>
