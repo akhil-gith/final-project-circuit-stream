@@ -586,31 +586,40 @@ export default function HomePage() {
                     return reasons.map((reason, i) => <li key={i}>{reason}</li>);
                   })()}
                 </ul>
-                <div className="flex flex-col items-center gap-2 w-full">
-                  <a
-                    href="https://www.nwf.org/Educational-Resources/Wildlife-Guide/Safety-Tips"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
-                  >
-                    Wildlife Safety Tips (NWF)
-                  </a>
-                  <a
-                    href="https://www.cdc.gov/niosh/topics/wildlife/default.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
-                  >
-                    CDC: Animal Encounter Safety
-                  </a>
-                  <a
-                    href="https://www.fs.usda.gov/visit/know-before-you-go/wildlife-safety"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
-                  >
-                    USDA: Wildlife Safety Guide
-                  </a>
+                <div className="flex flex-col items-center w-full mt-6">
+                  <h4 className="text-md font-bold text-gray-800 mb-2 text-center">Encountered this Animal? Recommended Safety Resources:</h4>
+                  <ul className="w-full flex flex-col gap-2">
+                    <li>
+                      <a
+                        href="https://www.nwf.org/Educational-Resources/Wildlife-Guide/Safety-Tips"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full block bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
+                      >
+                        Wildlife Safety Tips (NWF)
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="https://www.cdc.gov/niosh/topics/wildlife/default.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full block bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
+                      >
+                        CDC: Animal Encounter Safety
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="https://www.fs.usda.gov/visit/know-before-you-go/wildlife-safety"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full block bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein text-center"
+                      >
+                        USDA: Wildlife Safety Guide
+                      </a>
+                    </li>
+                  </ul>
                 </div>
               </div>
             )}
