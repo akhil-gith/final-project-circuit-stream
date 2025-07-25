@@ -368,11 +368,23 @@ export default function HomePage() {
             if (lowerName.includes('rare') || lowerDesc.includes('rare') || lowerDesc.includes('endangered') || lowerDesc.includes('threatened')) {
               rarity = 'rare';
             }
-            // Generate 15-sentence description (repeat/generate if not enough)
+            // Generate a varied, paragraph-style description of at least 10 lines
             let fullDesc = desc;
-            if (!fullDesc || fullDesc.split('.').length < 15) {
-              const base = fullDesc || `${name} (${sciName}) is an animal species.`;
-              fullDesc = Array(15).fill(base).map((s, i) => i === 0 ? s : `${name} is known for its unique traits.`).join(' ');
+            if (!fullDesc || fullDesc.split('.').length < 10) {
+              const lines: string[] = [];
+              lines.push(`${name} (${sciName}) is a fascinating animal species.`);
+              lines.push(`It is commonly found in various habitats and regions.`);
+              lines.push(`The scientific name for this animal is ${sciName}.`);
+              lines.push(`Many people are intrigued by the unique characteristics of the ${name}.`);
+              lines.push(`This animal plays an important role in its ecosystem.`);
+              lines.push(`Researchers have studied the ${name} to learn more about its behavior and adaptations.`);
+              lines.push(`Some individuals of this species can be identified by their distinct appearance.`);
+              lines.push(`The ${name} may interact with other animals and plants in its environment.`);
+              lines.push(`Conservation efforts are sometimes necessary to protect populations of ${name}.`);
+              lines.push(`Learning about the ${name} can help people appreciate biodiversity and nature.`);
+              // If desc exists, add it as the last line
+              if (desc) lines.push(desc);
+              fullDesc = lines.join(' ');
             }
             return (
               <div
@@ -421,11 +433,11 @@ export default function HomePage() {
                 <span className="text-gray-500">No image</span>
               </div>
             )}
-            <h2 className="text-2xl font-bold mb-2 text-center">{selectedAnimal.name}</h2>
-            <p className="text-gray-700 mb-2 text-center">Scientific Name: {selectedAnimal.sciName}</p>
+            <h2 className="text-2xl font-bold mb-2 text-center" style={{ color: '#111' }}>{selectedAnimal.name}</h2>
+            <p className="mb-2 text-center" style={{ color: '#222' }}>Scientific Name: {selectedAnimal.sciName}</p>
             {/* Rarity scale */}
             <div className="w-full flex items-center justify-center mb-4">
-              <span className="mr-2 text-sm">Rarity:</span>
+              <span className="mr-2 text-sm" style={{ color: '#222' }}>Rarity:</span>
               <div className="w-32 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-purple-700 flex items-center">
                 <div
                   className="h-4 rounded-full"
@@ -440,7 +452,7 @@ export default function HomePage() {
                 {selectedAnimal.rarity === 'rare' ? 'Rare' : 'Common'}
               </span>
             </div>
-            <p className="text-gray-800 text-base leading-relaxed text-center mb-2" style={{ maxHeight: '350px', overflowY: 'auto' }}>{selectedAnimal.desc}</p>
+            <p className="text-base leading-relaxed text-center mb-2" style={{ maxHeight: '350px', overflowY: 'auto', color: '#111' }}>{selectedAnimal.desc}</p>
             {/* Encountered this Animal button for dangerous animals */}
             {selectedAnimal.isDangerous && (
               <a
