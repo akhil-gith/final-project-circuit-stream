@@ -528,14 +528,18 @@ export default function HomePage() {
               style={{ minHeight: '280px', background: '#e0e7ef' }}
             />
             {/* Map Legend */}
-            <div className="absolute bottom-2 left-2 bg-white bg-opacity-90 rounded px-4 py-2 shadow text-sm flex flex-col gap-1 border border-gray-300">
+            <div className="absolute bottom-2 left-2 bg-white bg-opacity-95 rounded px-4 py-2 shadow text-sm flex flex-col gap-2 border border-gray-300">
               <div className="flex items-center gap-2">
                 <span className="inline-block w-4 h-4 rounded-full bg-red-600 border-2 border-white"></span>
-                <span>Search Center</span>
+                <span className="font-semibold text-black">Search Center</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-block w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></span>
-                <span>Animal Sighting</span>
+                <span className="font-semibold text-black">Animal Sighting (non-plant)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 rounded-full bg-gray-400 border-2 border-white"></span>
+                <span className="font-semibold text-black">Plants (filtered out)</span>
               </div>
             </div>
           </div>
@@ -573,8 +577,12 @@ export default function HomePage() {
           )}
           {filteredAnimals
             .filter(animal => {
-              // Type guards for iNaturalist, eBird, GBIF
+              // Exclude plants by checking for plant-related keywords in class/order/family/genus or name
               let name = "Unknown";
+              let gbifClass = "";
+              let gbifOrder = "";
+              let gbifFamily = "";
+              let gbifGenus = "";
               if ('taxon' in animal && animal.taxon) {
                 const taxon = animal.taxon as INatTaxonFull;
                 name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
@@ -586,12 +594,36 @@ export default function HomePage() {
                 name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
               } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
                 name = animal.gbifSpecies || "Unknown";
+                gbifClass = animal.gbifClass || "";
+                gbifOrder = animal.gbifOrder || "";
+                gbifFamily = animal.gbifFamily || "";
+                gbifGenus = animal.gbifGenus || "";
               }
               // Title case for animal name
               function toTitleCase(str: string) {
                 return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
               }
               name = toTitleCase(name);
+              // Exclude if plant-related
+              const plantKeywords = [
+                'plant', 'tree', 'flower', 'grass', 'herb', 'shrub', 'bush', 'fungi', 'moss', 'algae', 'lichen', 'fern', 'pinophyta', 'magnoliophyta', 'poaceae', 'fabaceae', 'rosaceae', 'asteraceae', 'cactaceae', 'orchidaceae', 'solanaceae', 'brassicaceae', 'lamiaceae', 'apiaceae', 'cupressaceae', 'euphorbiaceae', 'malvaceae', 'myrtaceae', 'rubiaceae', 'sapindaceae', 'araceae', 'amaranthaceae', 'cucurbitaceae', 'cyperaceae', 'ericaceae', 'iridaceae', 'lauraceae', 'moraceae', 'oleaceae', 'palm', 'palmae', 'pinaceae', 'rhamnaceae', 'rutaceae', 'salicaceae', 'ulvophyceae', 'bryophyta', 'pteridophyta', 'gymnosperm', 'angiosperm', 'monocot', 'dicot', 'seed plant', 'vascular plant', 'nonvascular plant', 'eudicot', 'magnoliid', 'basal angiosperm', 'chlorophyta', 'marchantiophyta', 'anthocerotophyta', 'gnetophyta', 'ginkgophyta', 'cycadophyta', 'coniferophyta', 'lycopodiophyta', 'sphenophyta', 'psilotophyta', 'charophyta', 'rhodophyta', 'phaeophyceae', 'bryopsida', 'sphagnopsida', 'polytrichopsida', 'hepatics', 'liverwort', 'hornwort', 'clubmoss', 'horsetail', 'quercus', 'acer', 'pinus', 'picea', 'betula', 'salix', 'populus', 'alnus', 'corylus', 'fagus', 'fraxinus', 'tilia', 'ulmus', 'carpinus', 'juglans', 'castanea', 'sorbus', 'prunus', 'malus', 'pyrus', 'crataegus', 'ribes', 'rubus', 'vaccinium', 'sambucus', 'viburnum', 'cornus', 'hedera', 'ilex', 'ligustrum', 'euonymus', 'rhamnus', 'sorbus', 'spiraea', 'potentilla', 'rosa', 'salvia', 'mentha', 'thymus', 'origanum', 'lavandula', 'rosemary', 'sage', 'basil', 'parsley', 'dill', 'coriander', 'cumin', 'fennel', 'anise', 'caraway', 'celery', 'chervil', 'tarragon', 'marjoram', 'oregano', 'bay', 'laurel', 'thyme', 'mint', 'catnip', 'lemon balm', 'spearmint', 'peppermint', 'bamboo', 'reed', 'rush', 'sedges', 'bulrush', 'cattail', 'lotus', 'waterlily', 'duckweed', 'alder', 'ash', 'aspen', 'beech', 'birch', 'cedar', 'cherry', 'chestnut', 'cottonwood', 'cypress', 'dogwood', 'elm', 'fir', 'hawthorn', 'hazel', 'hemlock', 'holly', 'hornbeam', 'juniper', 'larch', 'linden', 'maple', 'oak', 'olive', 'pine', 'plane', 'plum', 'poplar', 'redwood', 'rowan', 'sequoia', 'spruce', 'sycamore', 'walnut', 'willow', 'yew'
+              ];
+              const lowerName = name.toLowerCase();
+              const lowerClass = gbifClass.toLowerCase();
+              const lowerOrder = gbifOrder.toLowerCase();
+              const lowerFamily = gbifFamily.toLowerCase();
+              const lowerGenus = gbifGenus.toLowerCase();
+              if (
+                plantKeywords.some(kw =>
+                  lowerName.includes(kw) ||
+                  lowerClass.includes(kw) ||
+                  lowerOrder.includes(kw) ||
+                  lowerFamily.includes(kw) ||
+                  lowerGenus.includes(kw)
+                )
+              ) {
+                return false;
+              }
               return name !== "Unknown";
             })
             .map((animal, idx) => {
@@ -644,23 +676,57 @@ export default function HomePage() {
               if (lowerName.includes('rare') || lowerDesc.includes('rare') || lowerDesc.includes('endangered') || lowerDesc.includes('threatened')) {
                 rarity = 'rare';
               }
-              // Generate a varied, paragraph-style description of at least 10 lines
+              // Generate a varied, paragraph-style description with randomization
               let fullDesc = desc;
               if (!fullDesc || fullDesc.split('.').length < 10) {
-                const lines: string[] = [];
-                lines.push(`${name} (${sciName}) is a fascinating animal species.`);
-                lines.push(`It is commonly found in various habitats and regions.`);
-                lines.push(`The scientific name for this animal is ${sciName}.`);
-                lines.push(`Many people are intrigued by the unique characteristics of the ${name}.`);
-                lines.push(`This animal plays an important role in its ecosystem.`);
-                lines.push(`Researchers have studied the ${name} to learn more about its behavior and adaptations.`);
-                lines.push(`Some individuals of this species can be identified by their distinct appearance.`);
-                lines.push(`The ${name} may interact with other animals and plants in its environment.`);
-                lines.push(`Conservation efforts are sometimes necessary to protect populations of ${name}.`);
-                lines.push(`Learning about the ${name} can help people appreciate biodiversity and nature.`);
+                const templates = [
+                  [
+                    `${name} (${sciName}) is a fascinating animal species.`,
+                    `It is commonly found in various habitats and regions.`,
+                    `The scientific name for this animal is ${sciName}.`,
+                    `Many people are intrigued by the unique characteristics of the ${name}.`,
+                    `This animal plays an important role in its ecosystem.`,
+                    `Researchers have studied the ${name} to learn more about its behavior and adaptations.`,
+                    `Some individuals of this species can be identified by their distinct appearance.`,
+                    `The ${name} may interact with other animals and plants in its environment.`,
+                    `Conservation efforts are sometimes necessary to protect populations of ${name}.`,
+                    `Learning about the ${name} can help people appreciate biodiversity and nature.`
+                  ],
+                  [
+                    `Did you know? The ${name} (${sciName}) is known for its unique traits.`,
+                    `Its presence in the wild is a sign of a healthy ecosystem.`,
+                    `The ${name} has adapted to survive in diverse environments.`,
+                    `People often marvel at the beauty and behavior of the ${name}.`,
+                    `Scientists continue to discover new facts about ${name}.`,
+                    `The ${name} can be recognized by its ${desc ? desc : 'distinct features'}.`,
+                    `Protecting the ${name} is important for ecological balance.`,
+                    `You might spot the ${name} in forests, grasslands, or even near water.`,
+                    `The ${name} interacts with many other species in its habitat.`,
+                    `Learning about the ${name} inspires curiosity and respect for nature.`
+                  ],
+                  [
+                    `The ${name} (${sciName}) is a remarkable creature.`,
+                    `It thrives in its natural habitat, displaying amazing behaviors.`,
+                    `The scientific name, ${sciName}, reflects its classification.`,
+                    `Observers are often captivated by the ${name}'s appearance.`,
+                    `This animal contributes to the diversity of life on Earth.`,
+                    `Research on the ${name} reveals fascinating insights.`,
+                    `Distinctive markings or behaviors set the ${name} apart.`,
+                    `The ${name} is part of a complex web of life.`,
+                    `Efforts to conserve the ${name} benefit many other species.`,
+                    `Studying the ${name} helps us understand the natural world.`
+                  ]
+                ];
+                // Pick a random template and shuffle its sentences
+                const chosen = templates[Math.floor(Math.random() * templates.length)];
+                // Shuffle sentences for more variation
+                for (let i = chosen.length - 1; i > 0; i--) {
+                  const j = Math.floor(Math.random() * (i + 1));
+                  [chosen[i], chosen[j]] = [chosen[j], chosen[i]];
+                }
                 // If desc exists, add it as the last line
-                if (desc) lines.push(desc);
-                fullDesc = lines.join(' ');
+                if (desc) chosen.push(desc);
+                fullDesc = chosen.join(' ');
               }
               return (
                 <div
