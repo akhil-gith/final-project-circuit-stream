@@ -180,10 +180,9 @@ export default function HomePage() {
         Your browser does not support the video tag.
       </video>
 
-      {/* Top bar with Login/Signup or Profile */}
-      <div className="w-full flex justify-between items-center p-4 z-10 relative">
-        {/* Help/Feedback buttons on left */}
-        <div className="flex flex-col items-start gap-2">
+      {/* Top bar with Help/Feedback and Login/Signup or Profile */}
+      <div className="w-full flex justify-end items-center p-4 z-10 relative">
+        <div className="flex flex-col items-end mr-4 gap-2">
           <button
             className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein"
             onClick={() => setShowHelp(true)}
@@ -199,8 +198,6 @@ export default function HomePage() {
             Feedback
           </button>
         </div>
-        {/* Login/Signup/Profile on right */}
-        <div className="flex items-center">
         {!user ? (
           <>
             <button
@@ -227,7 +224,7 @@ export default function HomePage() {
               </div>
             )}
             <span className="font-semibold">{user.name}</span>
-            {/* Settings icon */}
+            {/* Settings icon - make button white */}
             <button
               className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300"
               onClick={() => {
@@ -248,138 +245,9 @@ export default function HomePage() {
           </div>
         )}
       </div>
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[350px] relative flex flex-col items-center animate-fadein">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
-              onClick={() => setShowSettings(false)}
-            >×</button>
-            <h2 className="text-xl font-bold mb-4">Settings</h2>
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                setUser(u => u ? { ...u, name: editName, password: editPassword } : u);
-                setShowSettings(false);
-              }}
-              className="w-full flex flex-col gap-3"
-            >
-              <label className="font-semibold">Change Username</label>
-              <input
-                type="text"
-                value={editName}
-                onChange={e => setEditName(e.target.value)}
-                className="border px-3 py-2 rounded w-full"
-                required
-              />
-              <label className="font-semibold">Change Password</label>
-              <input
-                type="password"
-                value={editPassword}
-                onChange={e => setEditPassword(e.target.value)}
-                className="border px-3 py-2 rounded w-full"
-                required
-              />
-              <label className="font-semibold">Search Range</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={searchUnit === 'miles' ? 8 : 13}
-                  max={searchUnit === 'miles' ? 50 : 80}
-                  value={searchRange}
-                  onChange={e => setSearchRange(Number(e.target.value))}
-                  className="border px-3 py-2 rounded w-24"
-                  required
-                />
-                <span>{searchUnit === 'miles' ? 'miles' : 'km'}</span>
-              </div>
-              <label className="font-semibold">Units</label>
-              <div className="flex gap-4 mb-2">
-                <button
-                  type="button"
-                  className={`px-4 py-2 rounded ${searchUnit === 'miles' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}
-                  onClick={() => setSearchUnit('miles')}
-                >Miles</button>
-                <button
-                  type="button"
-                  className={`px-4 py-2 rounded ${searchUnit === 'km' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}
-                  onClick={() => setSearchUnit('km')}
-                >Kilometers</button>
-              </div>
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600 font-bold mt-2"
-              >Save Changes</button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ...existing code... */}
 
-      {/* Auth Modal */}
-      {showAuth && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-white bg-opacity-90 rounded-xl shadow-2xl p-10 max-w-lg w-full relative flex flex-col items-center animate-fadein">
-            ...existing code...
-          </div>
-        </div>
-      )}
-            <h2 className="text-xl font-bold mb-4">{showAuth === 'login' ? 'Log In' : 'Sign Up'}</h2>
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                const form = e.target as HTMLFormElement;
-                const name = (form.elements.namedItem('name') as HTMLInputElement)?.value || '';
-                const email = (form.elements.namedItem('email') as HTMLInputElement)?.value || '';
-                setUser({ name, email });
-                setShowAuth(null);
-              }}
-            >
-              {showAuth === 'signup' && (
-                <input
-                  name="name"
-                  type="text"
-                  placeholder="Name"
-                  className="border px-3 py-2 rounded w-full mb-3"
-                  required
-                />
-              )}
-              <input
-                name="email"
-                type="email"
-                placeholder="Email"
-                className="border px-3 py-2 rounded w-full mb-3"
-                required
-              />
-              <input
-                name="password"
-                type="password"
-                placeholder="Password"
-                className="border px-3 py-2 rounded w-full mb-4"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600 mb-2"
-              >
-                {showAuth === 'login' ? 'Log In' : 'Sign Up'}
-              </button>
-            </form>
-            <div className="flex flex-col items-center mt-2">
-              <button
-                className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100 transition-all duration-300 animate-fadein"
-                onClick={() => {
-                  setUser({ name: 'Google User', email: 'user@gmail.com', photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' });
-                  setShowAuth(null);
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g><path d="M44.5 20H24V28.5H35.7C34.3 32.6 30.6 35.5 24 35.5C17.1 35.5 11.5 29.9 11.5 23C11.5 16.1 17.1 10.5 24 10.5C27.1 10.5 29.7 11.6 31.7 13.4L37.1 8C33.6 4.9 29.1 3 24 3C12.4 3 3 12.4 3 24C3 35.6 12.4 45 24 45C35.6 45 45 35.6 45 24C45 22.7 44.8 21.3 44.5 20Z" fill="#FFC107"/><path d="M6.3 14.7L12.5 19.1C14.5 15.1 18.9 12.5 24 12.5C27.1 12.5 29.7 13.6 31.7 15.4L37.1 10C33.6 6.9 29.1 5 24 5C16.1 5 9.1 10.1 6.3 14.7Z" fill="#FF3D00"/><path d="M24 44C29.1 44 33.6 42.1 37.1 39L31.7 33.6C29.7 35.4 27.1 36.5 24 36.5C18.9 36.5 14.5 33.9 12.5 29.9L6.3 34.3C9.1 38.9 16.1 44 24 44Z" fill="#4CAF50"/><path d="M44.5 20H24V28.5H35.7C35.1 30.2 34.1 31.7 32.7 32.8L38.1 37.2C40.7 34.8 42.5 31.7 44.5 28.5Z" fill="#1976D2"/></g></svg>
-                Continue with Google
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ...existing code... */}
 
       {/* Settings Modal */}
       {showSettings && (
@@ -683,7 +551,7 @@ export default function HomePage() {
                     background: selectedAnimal.rarity === 'rare' ? 'purple' : 'red',
                     transition: 'width 0.3s',
                   }}
-                ></div>
+                />
               </div>
               <span className="ml-2 text-sm font-bold" style={{ color: selectedAnimal.rarity === 'rare' ? 'purple' : 'red' }}>
                 {selectedAnimal.rarity === 'rare' ? 'Rare' : 'Common'}
