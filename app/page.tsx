@@ -246,7 +246,7 @@ export default function HomePage() {
         )}
       {/* Auth Modal - moved to top-level, outside top bar and conditional branches */}
       {showAuth && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[200]">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[999]">
           <div className="bg-white text-black rounded-lg p-8 min-w-[300px] relative animate-fadein">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-black"
