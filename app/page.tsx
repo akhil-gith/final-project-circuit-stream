@@ -587,12 +587,28 @@ export default function HomePage() {
                   })()}
                 </ul>
                 <a
-                  href={`https://www.google.com/search?q=what+to+do+when+you+encounter+a+${encodeURIComponent(selectedAnimal.name)}`}
+                  href="https://www.nwf.org/Educational-Resources/Wildlife-Guide/Safety-Tips"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein"
                 >
-                  Encountered this Animal?
+                  Wildlife Safety Tips (NWF)
+                </a>
+                <a
+                  href="https://www.cdc.gov/niosh/topics/wildlife/default.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein"
+                >
+                  CDC: Animal Encounter Safety
+                </a>
+                <a
+                  href="https://www.fs.usda.gov/visit/know-before-you-go/wildlife-safety"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded shadow-lg text-lg transition-colors animate-fadein"
+                >
+                  USDA: Wildlife Safety Guide
                 </a>
               </div>
             )}
