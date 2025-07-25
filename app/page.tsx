@@ -70,7 +70,7 @@ export default function HomePage() {
       if (ebirdRes.ok) {
         const ebirdData = await ebirdRes.json();
         // eBird results: { comName, sciName, lat, lng }
-        const ebirdSightings = ebirdData.map((bird: any) => ({
+        const ebirdSightings = ebirdData.map((bird: EBirdSighting & { lng: number; lat: number; sciName?: string; comName?: string }) => ({
           geojson: { coordinates: [bird.lng, bird.lat] },
           taxon: { name: bird.sciName },
           ebirdCommon: bird.comName,
@@ -94,7 +94,16 @@ export default function HomePage() {
       if (gbifRes.ok) {
         const gbifData = await gbifRes.json();
         // GBIF results: { species, scientificName, decimalLatitude, decimalLongitude, taxonRank, kingdom, phylum, class, order, family, genus }
-        const gbifSightings = gbifData.results.map((item: any) => ({
+        const gbifSightings = gbifData.results.map((item: GBIFSighting & {
+          decimalLongitude: number;
+          decimalLatitude: number;
+          species?: string;
+          scientificName?: string;
+          class?: string;
+          order?: string;
+          family?: string;
+          genus?: string;
+        }) => ({
           geojson: { coordinates: [item.decimalLongitude, item.decimalLatitude] },
           gbifSpecies: item.species || item.scientificName || "Unknown",
           gbifScientific: item.scientificName || "",
