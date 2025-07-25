@@ -212,7 +212,9 @@ export default function HomePage() {
             >
               Sign Up
             </button>
-      {/* Auth Modal */}
+          </>
+        ) : (
+      {/* Auth Modal - moved to top-level, outside top bar */}
       {showAuth && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[200]">
           <div className="bg-white text-black rounded-lg p-8 min-w-[300px] relative animate-fadein">
@@ -278,8 +280,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-          </>
-        ) : (
           <div className="flex items-center space-x-4">
             {/* Custom profile logo */}
             {user.photoUrl ? (
