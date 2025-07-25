@@ -16,6 +16,9 @@ export default function HomePage() {
   const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
   const [location, setLocation] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
   // Sighting types for iNaturalist, eBird, GBIF
   type INatTaxonBasic = { name?: string };
   type INatTaxonFull = { name?: string; preferred_common_name?: string; wikipedia_summary?: string };
@@ -177,8 +180,24 @@ export default function HomePage() {
         Your browser does not support the video tag.
       </video>
 
-      {/* Top bar with Login/Signup or Profile */}
+      {/* Top bar with Help/Feedback and Login/Signup or Profile */}
       <div className="w-full flex justify-end items-center p-4 z-10 relative">
+        <div className="flex flex-col items-end mr-4 gap-2">
+          <button
+            className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein"
+            onClick={() => setShowHelp(true)}
+            title="Help / Tutorial"
+          >
+            Help
+          </button>
+          <button
+            className="bg-blue-500 text-white px-3 py-2 rounded shadow hover:bg-blue-600 font-bold animate-fadein"
+            onClick={() => setShowFeedback(true)}
+            title="Send Feedback"
+          >
+            Feedback
+          </button>
+        </div>
         {!user ? (
           <>
             <button
@@ -358,6 +377,132 @@ export default function HomePage() {
                 Continue with Google
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[350px] relative flex flex-col items-center animate-fadein">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowSettings(false)}
+            >×</button>
+            <h2 className="text-xl font-bold mb-4">Settings</h2>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                setUser(u => u ? { ...u, name: editName, password: editPassword } : u);
+                setShowSettings(false);
+              }}
+              className="w-full flex flex-col gap-3"
+            >
+              <label className="font-semibold">Change Username</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="border px-3 py-2 rounded w-full"
+                required
+              />
+              <label className="font-semibold">Change Password</label>
+              <input
+                type="password"
+                value={editPassword}
+                onChange={e => setEditPassword(e.target.value)}
+                className="border px-3 py-2 rounded w-full"
+                required
+              />
+              <label className="font-semibold">Search Range</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={searchUnit === 'miles' ? 8 : 13}
+                  max={searchUnit === 'miles' ? 50 : 80}
+                  value={searchRange}
+                  onChange={e => setSearchRange(Number(e.target.value))}
+                  className="border px-3 py-2 rounded w-24"
+                  required
+                />
+                <span>{searchUnit === 'miles' ? 'miles' : 'km'}</span>
+              </div>
+              <label className="font-semibold">Units</label>
+              <div className="flex gap-4 mb-2">
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded ${searchUnit === 'miles' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}
+                  onClick={() => setSearchUnit('miles')}
+                >Miles</button>
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded ${searchUnit === 'km' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}
+                  onClick={() => setSearchUnit('km')}
+                >Kilometers</button>
+              </div>
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600 font-bold mt-2"
+              >Save Changes</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-lg w-full relative animate-fadein">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowHelp(false)}
+            >×</button>
+            <h2 className="text-xl font-bold mb-4 text-center">How to Use Animal Explorer</h2>
+            <ol className="list-decimal list-inside text-left text-base mb-4">
+              <li>Enter your location in the search bar to find animals nearby.</li>
+              <li>Click on any animal card to view details, rarity, and safety info.</li>
+              <li>Dangerous animals are highlighted in red and show safety resources.</li>
+              <li>Sign up or log in to unlock unlimited searches and profile features.</li>
+              <li>Use the settings icon to change your profile, search range, or units.</li>
+              <li>Click the Help button anytime for this tutorial.</li>
+              <li>Send feedback or suggestions using the Feedback button below Help.</li>
+            </ol>
+            <p className="text-gray-700 text-center">Explore, learn, and stay safe!</p>
+          </div>
+        </div>
+      )}
+      {/* Feedback Modal */}
+      {showFeedback && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-lg w-full relative animate-fadein">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowFeedback(false)}
+            >×</button>
+            <h2 className="text-xl font-bold mb-4 text-center">Send Feedback</h2>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                window.location.href = `mailto:akhilsnalluri@gmail.com?subject=Animal Explorer Feedback&body=${encodeURIComponent(feedbackText)}`;
+                setShowFeedback(false);
+                setFeedbackText("");
+              }}
+              className="flex flex-col gap-4"
+            >
+              <label className="font-semibold">Your feedback or suggestions:</label>
+              <textarea
+                value={feedbackText}
+                onChange={e => setFeedbackText(e.target.value)}
+                rows={5}
+                className="border px-3 py-2 rounded w-full resize-none"
+                placeholder="How is the app performance? Any improvements you'd like to see?"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600 font-bold"
+              >Send Feedback</button>
+            </form>
           </div>
         </div>
       )}
