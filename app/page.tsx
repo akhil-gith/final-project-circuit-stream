@@ -440,37 +440,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Map Section - OpenStreetMap Static Image */}
-      <div className="flex flex-col items-center mb-12 z-10 relative">
-        <h2 className="text-2xl font-bold mb-4 text-white drop-shadow-lg">Animal Locations Map</h2>
-        <div className="w-full max-w-3xl h-96 rounded-lg overflow-hidden shadow-lg border border-gray-700">
-          <div className="w-full h-full rounded-2xl border-8 border-white border-opacity-30 bg-white bg-opacity-10 shadow-2xl" style={{boxShadow: '0 0 32px 8px rgba(255,255,255,0.2)'}}>
-            <div className="w-full h-full rounded-2xl relative" style={{ minHeight: '384px' }}>
-              {/* OpenStreetMap static image with markers */}
-              <img
-                src={`https://staticmap.openstreetmap.de/staticmap.php?center=${coords ? coords.lat + ',' + coords.lon : '51.505,-0.09'}&zoom=12&size=800x384&maptype=mapnik${coords ? `&markers=${coords.lat},${coords.lon},blue1` : ''}${allLocations.length > 0 ? allLocations.map(loc => `&markers=${loc.lat},${loc.lon},red1`).join('') : ''}`}
-                alt="Animal Map"
-                width={800}
-                height={384}
-                className="absolute top-0 left-0 w-full h-full object-cover rounded-2xl"
-                style={{ border: 'none', background: 'transparent' }}
-                loading="eager"
-              />
-            </div>
-          </div>
-        </div>
-        {/* Map Key/Legend */}
-        <div className="flex items-center gap-6 mt-4 bg-black bg-opacity-60 rounded-lg px-6 py-3 shadow-lg text-white text-base font-bold drop-shadow-lg">
-          <div className="flex items-center gap-2">
-            <span style={{display: 'inline-block', width: 18, height: 18, background: 'blue', borderRadius: '50%', border: '2px solid #fff'}}></span>
-            <span className="text-white">User Location</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span style={{display: 'inline-block', width: 18, height: 18, background: 'red', borderRadius: '50%', border: '2px solid #fff'}}></span>
-            <span className="text-white">Animal Location</span>
-          </div>
-        </div>
-      </div>
+      {/* ...existing code... */}
 
       {/* ...existing code... */}
 
