@@ -12,13 +12,11 @@ export default function HomePage() {
   const [location, setLocation] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   // Sighting types for iNaturalist, eBird, GBIF
+  type INatTaxonBasic = { name?: string };
+  type INatTaxonFull = { name?: string; preferred_common_name?: string; wikipedia_summary?: string };
   type INatSighting = {
     geojson: { coordinates: [number, number] };
-    taxon?: {
-      name?: string;
-      preferred_common_name?: string;
-      wikipedia_summary?: string;
-    };
+    taxon?: INatTaxonBasic | INatTaxonFull;
     photos?: { url: string }[];
   };
   type EBirdSighting = {
@@ -306,9 +304,13 @@ export default function HomePage() {
             let sciName = "";
             let desc = "";
             if ('taxon' in animal && animal.taxon) {
-              name = animal.taxon.preferred_common_name || animal.taxon.name || "Unknown";
-              sciName = animal.taxon.name || "";
-              desc = animal.taxon.wikipedia_summary || "";
+              // Type narrowing for iNaturalist taxon
+              const taxon = animal.taxon as INatTaxonFull;
+              name = typeof taxon.preferred_common_name === 'string' && taxon.preferred_common_name
+                ? taxon.preferred_common_name
+                : taxon.name || "Unknown";
+              sciName = taxon.name || "";
+              desc = typeof taxon.wikipedia_summary === 'string' ? taxon.wikipedia_summary : "";
             } else if ('ebirdCommon' in animal) {
               name = animal.ebirdCommon || "Unknown";
               sciName = 'sciName' in animal ? animal.sciName || "" : "";
