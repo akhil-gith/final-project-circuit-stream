@@ -639,10 +639,6 @@ markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).joi
                 <div
                   className="h-4 rounded-full"
                   style={{
-            // Emphasize danger in description for dangerous animals
-            if (isDangerous) {
-              fullDesc = `⚠️ Danger! ${name} is known to be dangerous or harmful to humans. Please exercise caution when encountering this animal.\n\n` + fullDesc;
-            }
                     width: selectedAnimal.rarity === 'rare' ? '80%' : '20%',
                     background: selectedAnimal.rarity === 'rare' ? 'purple' : 'red',
                     transition: 'width 0.3s',
