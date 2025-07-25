@@ -462,14 +462,15 @@ markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).joi
         <h2 className="text-2xl font-bold mb-4 text-white drop-shadow-lg">Animal Locations Map</h2>
         <div className="w-full max-w-3xl h-96 rounded-lg overflow-hidden shadow-lg border border-gray-700">
           <div className="w-full h-full rounded-2xl border-8 border-white border-opacity-30 bg-white bg-opacity-10 shadow-2xl" style={{boxShadow: '0 0 32px 8px rgba(255,255,255,0.2)'}}>
-            <iframe
-              title="Animal Map"
-              key={bbox + markerString}
-              src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}${markerString}`}
-              className="w-full h-full rounded-2xl"
-              style={{ border: 'none', background: 'transparent' }}
-              allowFullScreen
-            />
+            {/* Use static OpenStreetMap marker images for better visibility */}
+            <div className="w-full h-full rounded-2xl relative" style={{ minHeight: '384px' }}>
+              <img
+                src={`https://staticmap.openstreetmap.de/staticmap.php?center=${coords ? coords.lat + ',' + coords.lon : '51.505,-0.09'}&zoom=12&size=800x384${coords ? `&markers=${coords.lat},${coords.lon},lightblue1` : ''}${allLocations.length > 0 ? `&markers=${allLocations.map(loc => loc.lat + ',' + loc.lon + ',red').join('|')}` : ''}`}
+                alt="Animal Map"
+                className="absolute top-0 left-0 w-full h-full object-cover rounded-2xl"
+                style={{ border: 'none', background: 'transparent' }}
+              />
+            </div>
           </div>
         </div>
         {/* Map Key/Legend */}
@@ -546,6 +547,11 @@ markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).joi
                 animal.gbifGenus
               ].filter(Boolean).join(", ");
             }
+            // Title case for animal name
+            function toTitleCase(str: string) {
+              return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+            }
+            name = toTitleCase(name);
             // Danger/poison keyword check
             const dangerKeywords = [
               "poison", "venom", "danger", "toxic", "bite", "sting", "attack", "aggressive", "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish", "mosquito", "wasp", "bee", "ant", "centipede", "millipede", "lethal", "predator", "disease", "infection", "injury"
@@ -633,6 +639,10 @@ markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).joi
                 <div
                   className="h-4 rounded-full"
                   style={{
+            // Emphasize danger in description for dangerous animals
+            if (isDangerous) {
+              fullDesc = `⚠️ Danger! ${name} is known to be dangerous or harmful to humans. Please exercise caution when encountering this animal.\n\n` + fullDesc;
+            }
                     width: selectedAnimal.rarity === 'rare' ? '80%' : '20%',
                     background: selectedAnimal.rarity === 'rare' ? 'purple' : 'red',
                     transition: 'width 0.3s',
@@ -644,6 +654,17 @@ markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).joi
               </span>
             </div>
             <p className="text-base leading-relaxed text-center mb-2" style={{ maxHeight: '350px', overflowY: 'auto', color: '#111' }}>{selectedAnimal.desc}</p>
+            {/* Special Facts Section */}
+            {selectedAnimal.facts && (
+              <div className="w-full mt-4 mb-2">
+                <h3 className="text-lg md:text-xl font-bold text-blue-700 mb-2 text-center">Special Facts</h3>
+                <ul className="list-disc list-inside text-left text-blue-800 text-base md:text-lg mb-4">
+                  {selectedAnimal.facts.map((fact, i) => (
+                    <li key={i} className="mb-2 md:mb-3">{fact}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {/* Danger reasons bullet points */}
             {selectedAnimal.isDangerous && (
               <div className="w-full mt-4 mb-2">
