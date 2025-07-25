@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Settings as SettingsIcon } from "lucide-react";
 
 // animalData removed; animals will be shown dynamically from API results
 
