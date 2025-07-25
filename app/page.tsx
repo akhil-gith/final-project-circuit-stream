@@ -7,6 +7,7 @@ import Image from "next/image";
 
 export default function HomePage() {
   const [user, setUser] = useState<{ name: string; email: string; password?: string; photoUrl?: string } | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [editName, setEditName] = useState("");
   const [editPassword, setEditPassword] = useState("");
@@ -169,15 +170,23 @@ export default function HomePage() {
       <div className="absolute top-0 left-0 w-full flex justify-end items-center p-4 z-[100]" style={{background: 'transparent'}}>
         <div className="flex flex-col items-end mr-4 gap-2">
           <button
-            className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein"
-            onClick={() => setShowHelp(true)}
+            className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein active:animate-press"
+            onClick={e => {
+              e.currentTarget.classList.add('animate-press');
+              setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+              setShowHelp(true);
+            }}
             title="Help / Tutorial"
           >
             ❓
           </button>
           <button
-            className="bg-blue-500 text-white px-3 py-2 rounded shadow hover:bg-blue-600 font-bold animate-fadein"
-            onClick={() => setShowFeedback(true)}
+            className="bg-blue-500 text-white px-3 py-2 rounded shadow hover:bg-blue-600 font-bold animate-fadein active:animate-press"
+            onClick={e => {
+              e.currentTarget.classList.add('animate-press');
+              setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+              setShowFeedback(true);
+            }}
             title="Send Feedback"
           >
             Feedback
@@ -186,8 +195,10 @@ export default function HomePage() {
         <div className="flex items-center space-x-4">
           {/* Settings button for all users */}
           <button
-            className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2 text-xl"
-            onClick={() => {
+            className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2 text-xl active:animate-press"
+            onClick={e => {
+              e.currentTarget.classList.add('animate-press');
+              setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
               setEditName(user?.name || "");
               setEditPassword(user?.password || "");
               setShowSettings(true);
@@ -199,14 +210,22 @@ export default function HomePage() {
           {!user ? (
             <>
               <button
-                className="bg-white text-black px-4 py-2 rounded mr-2 hover:bg-gray-200"
-                onClick={() => setShowAuth('login')}
+                className="bg-white text-black px-4 py-2 rounded mr-2 hover:bg-gray-200 active:animate-press"
+                onClick={e => {
+                  e.currentTarget.classList.add('animate-press');
+                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                  setShowAuth('login');
+                }}
               >
                 Log In
               </button>
               <button
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                onClick={() => setShowAuth('signup')}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 active:animate-press"
+                onClick={e => {
+                  e.currentTarget.classList.add('animate-press');
+                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                  setShowAuth('signup');
+                }}
               >
                 Sign Up
               </button>
@@ -223,11 +242,51 @@ export default function HomePage() {
               )}
               <span className="font-semibold">{user.name}</span>
               <button
-                className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200"
-                onClick={() => setUser(null)}
+                className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200 transition-all duration-300 active:animate-press"
+                onClick={e => {
+                  e.currentTarget.classList.add('animate-press');
+                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                  setShowLogoutConfirm(true);
+                }}
               >
                 Log Out
               </button>
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[999] animate-fadein">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[320px] max-w-sm w-full relative flex flex-col items-center animate-fadein">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold active:animate-press"
+              onClick={e => {
+                e.currentTarget.classList.add('animate-press');
+                setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                setShowLogoutConfirm(false);
+              }}
+              aria-label="Close"
+            >×</button>
+            <h2 className="text-xl font-bold mb-4 text-center">Are you sure you want to log out?</h2>
+            <div className="flex gap-4 mt-2">
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded font-bold hover:bg-red-600 transition-all duration-300 active:animate-press"
+                onClick={e => {
+                  e.currentTarget.classList.add('animate-press');
+                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                  setUser(null);
+                  setShowLogoutConfirm(false);
+                }}
+              >Log Out</button>
+              <button
+                className="bg-gray-300 text-black px-4 py-2 rounded font-bold hover:bg-gray-400 transition-all duration-300 active:animate-press"
+                onClick={e => {
+                  e.currentTarget.classList.add('animate-press');
+                  setTimeout(() => e.currentTarget.classList.remove('animate-press'), 300);
+                  setShowLogoutConfirm(false);
+                }}
+              >Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
             </>
           )}
         </div>
@@ -701,7 +760,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Animations for fade/swoosh */}
+      {/* Animations for fade/swoosh and fadeout */}
       <style jsx global>{`
         .animate-fadein {
           animation: fadein 0.5s;
@@ -710,12 +769,27 @@ export default function HomePage() {
           from { opacity: 0; }
           to { opacity: 1; }
         }
+        .animate-fadeout {
+          animation: fadeout 0.5s;
+        }
+        @keyframes fadeout {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
         .animate-swoosh {
           animation: swoosh 0.5s cubic-bezier(.68,-0.55,.27,1.55);
         }
         @keyframes swoosh {
           from { transform: translateY(40px) scale(0.95); opacity: 0; }
           to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .animate-press {
+          animation: press 0.3s cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        @keyframes press {
+          0% { transform: scale(1); }
+          50% { transform: scale(0.92); }
+          100% { transform: scale(1); }
         }
       `}</style>
     </div>
