@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { User as UserIcon } from "lucide-react";
+import { User as UserIcon, Settings as SettingsIcon } from "lucide-react";
 
 // animalData removed; animals will be shown dynamically from API results
 
 export default function HomePage() {
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; password?: string; photoUrl?: string } | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [searchUnit, setSearchUnit] = useState<'miles' | 'km'>('miles');
+  const [searchRange, setSearchRange] = useState(8);
   const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
   const [location, setLocation] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -72,8 +77,8 @@ export default function HomePage() {
     const lat = parseFloat(geoData[0].lat);
     const lon = parseFloat(geoData[0].lon);
     setCoords({ lat, lon });
-    // Fetch animal sightings from iNaturalist within 8 miles (12.87 km)
-    const radiusKm = 12.87;
+    // Convert range to km if needed
+    const radiusKm = searchUnit === 'miles' ? searchRange * 1.60934 : searchRange;
     const apiUrl = `https://api.inaturalist.org/v1/observations?lat=${lat}&lng=${lon}&radius=${radiusKm}&per_page=50&order=desc&order_by=created_at&verifiable=true&photos=true`;
     const sightRes = await fetch(apiUrl);
     const sightData = await sightRes.json();
@@ -81,7 +86,8 @@ export default function HomePage() {
 
     // Fetch bird sightings from eBird (public API, returns recent birds)
     try {
-      const ebirdRes = await fetch(`https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lon}&dist=13`, {
+      const ebirdDist = searchUnit === 'miles' ? searchRange : Math.round(searchRange / 1.60934);
+      const ebirdRes = await fetch(`https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lon}&dist=${ebirdDist}`, {
         headers: { 'X-eBirdApiToken': 'sample' } // Replace 'sample' with your eBird API token
       });
       if (ebirdRes.ok) {
@@ -101,7 +107,7 @@ export default function HomePage() {
     // Fetch animal occurrences from GBIF (Global Biodiversity Information Facility)
     try {
       // GBIF API: search for occurrences within bounding box
-      const gbifRadius = 0.2; // ~20km
+      const gbifRadius = searchUnit === 'miles' ? searchRange * 0.016 : searchRange * 0.01; // ~1 mile = 0.016 deg, 1 km = 0.01 deg
       const gbifMinLat = lat - gbifRadius;
       const gbifMaxLat = lat + gbifRadius;
       const gbifMinLon = lon - gbifRadius;
@@ -190,9 +196,28 @@ export default function HomePage() {
           </>
         ) : (
           <div className="flex items-center space-x-4">
-            <UserIcon className="w-6 h-6" />
-            <span>{user.name}</span>
+            {/* Custom profile logo */}
+            {user.photoUrl ? (
+              <Image src={user.photoUrl} alt="Profile" width={32} height={32} className="rounded-full border-2 border-blue-400 shadow-lg animate-swoosh" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-green-400 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">{user.name ? user.name[0].toUpperCase() : 'U'}</span>
+              </div>
+            )}
+            <span className="font-semibold">{user.name}</span>
             <span className="text-gray-400">{user.email}</span>
+            {/* Settings icon */}
+            <button
+              className="p-2 rounded-full hover:bg-gray-200"
+              onClick={() => {
+                setEditName(user.name);
+                setEditPassword(user.password || "");
+                setShowSettings(true);
+              }}
+              title="Settings"
+            >
+              <SettingsIcon className="w-6 h-6 text-gray-700" />
+            </button>
             <button
               className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200"
               onClick={() => setUser(null)}
@@ -202,11 +227,78 @@ export default function HomePage() {
           </div>
         )}
       </div>
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[350px] relative flex flex-col items-center animate-fadein">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl font-bold"
+              onClick={() => setShowSettings(false)}
+            >×</button>
+            <h2 className="text-xl font-bold mb-4">Settings</h2>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                setUser(u => u ? { ...u, name: editName, password: editPassword } : u);
+                setShowSettings(false);
+              }}
+              className="w-full flex flex-col gap-3"
+            >
+              <label className="font-semibold">Change Username</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="border px-3 py-2 rounded w-full"
+                required
+              />
+              <label className="font-semibold">Change Password</label>
+              <input
+                type="password"
+                value={editPassword}
+                onChange={e => setEditPassword(e.target.value)}
+                className="border px-3 py-2 rounded w-full"
+                required
+              />
+              <label className="font-semibold">Search Range</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={searchUnit === 'miles' ? 8 : 13}
+                  max={searchUnit === 'miles' ? 50 : 80}
+                  value={searchRange}
+                  onChange={e => setSearchRange(Number(e.target.value))}
+                  className="border px-3 py-2 rounded w-24"
+                  required
+                />
+                <span>{searchUnit === 'miles' ? 'miles' : 'km'}</span>
+              </div>
+              <label className="font-semibold">Units</label>
+              <div className="flex gap-4 mb-2">
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded ${searchUnit === 'miles' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}
+                  onClick={() => setSearchUnit('miles')}
+                >Miles</button>
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded ${searchUnit === 'km' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}
+                  onClick={() => setSearchUnit('km')}
+                >Kilometers</button>
+              </div>
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600 font-bold mt-2"
+              >Save Changes</button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Auth Modal */}
       {showAuth && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-20">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[300px] relative">
+          <div className="bg-white text-black rounded-lg p-8 min-w-[300px] relative animate-fadein">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-black"
               onClick={() => setShowAuth(null)}
@@ -256,9 +348,9 @@ export default function HomePage() {
             </form>
             <div className="flex flex-col items-center mt-2">
               <button
-                className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100"
+                className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100 transition-all duration-300 animate-fadein"
                 onClick={() => {
-                  setUser({ name: 'Google User', email: 'user@gmail.com' });
+                  setUser({ name: 'Google User', email: 'user@gmail.com', photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' });
                   setShowAuth(null);
                 }}
               >
@@ -317,7 +409,7 @@ export default function HomePage() {
           </button>
         </form>
         {coords && (
-          <p className="text-gray-400 mb-4">Showing animals within 8 miles of <span className="font-semibold">{location}</span></p>
+          <p className="text-gray-400 mb-4">Showing animals within {searchRange} {searchUnit} of <span className="font-semibold">{location}</span></p>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredAnimals.length === 0 && coords && !loading && (
@@ -419,7 +511,7 @@ export default function HomePage() {
       {/* Animal Modal */}
       {selectedAnimal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-white bg-opacity-90 rounded-xl shadow-2xl p-10 max-w-lg w-full relative flex flex-col items-center">
+          <div className="bg-white bg-opacity-90 rounded-xl shadow-2xl p-10 max-w-lg w-full relative flex flex-col items-center animate-fadein">
             <button
               className="absolute top-4 right-4 text-gray-600 hover:text-black text-2xl font-bold"
               onClick={() => setSelectedAnimal(null)}
@@ -469,6 +561,24 @@ export default function HomePage() {
       )}
         </div>
       </div>
+
+      {/* Animations for fade/swoosh */}
+      <style jsx global>{`
+        .animate-fadein {
+          animation: fadein 0.5s;
+        }
+        @keyframes fadein {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-swoosh {
+          animation: swoosh 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        @keyframes swoosh {
+          from { transform: translateY(40px) scale(0.95); opacity: 0; }
+          to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
