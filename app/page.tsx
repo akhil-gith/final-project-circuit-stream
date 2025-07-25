@@ -448,7 +448,10 @@ export default function HomePage() {
             {/* Use static OpenStreetMap marker images for better visibility */}
             <div className="w-full h-full rounded-2xl relative" style={{ minHeight: '384px' }}>
               <img
-                src={`https://staticmap.openstreetmap.de/staticmap.php?center=${coords ? coords.lat + ',' + coords.lon : '51.505,-0.09'}&zoom=12&size=800x384${coords ? `&markers=${coords.lat},${coords.lon},lightblue1` : ''}${allLocations.length > 0 ? `&markers=${allLocations.map(loc => loc.lat + ',' + loc.lon + ',red').join('|')}` : ''}`}
+                src={`https://staticmap.openstreetmap.de/staticmap.php?center=${coords ? coords.lat + ',' + coords.lon : '51.505,-0.09'}&zoom=12&size=800x384&markers=${[
+                  coords ? `${coords.lat},${coords.lon},lightblue1` : null,
+                  ...allLocations.map(loc => `${loc.lat},${loc.lon},red`)
+                ].filter(Boolean).join('|')}`}
                 alt="Animal Map"
                 width={800}
                 height={384}
