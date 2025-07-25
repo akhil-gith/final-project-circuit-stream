@@ -14,163 +14,7 @@ type Animal = {
   locations?: { lat: number; lon: number }[];
 };
 
-const animalData: Animal[] = [
-  {
-    name: "Deer",
-    scientificName: "Odocoileus virginianus",
-    diet: "Herbivore",
-    species: "Mammal",
-    image: "/images/deer.jpg",
-    locations: [
-      { lat: 51.505, lon: -0.09 }, // London
-      { lat: 52.52, lon: 13.405 }, // Berlin
-    ],
-  },
-  {
-    name: "Lion",
-    scientificName: "Panthera leo",
-    diet: "Carnivore",
-    species: "Mammal",
-    image: "/images/lion.jpg",
-    locations: [
-      { lat: -1.2921, lon: 36.8219 }, // Nairobi
-      { lat: -2.3333, lon: 34.8333 }, // Serengeti
-    ],
-  },
-  {
-    name: "Iguana",
-    scientificName: "Iguana iguana",
-    diet: "Herbivore",
-    species: "Reptile",
-    image: "/images/iguana.jpg",
-    locations: [
-      { lat: -6.2088, lon: 106.8456 }, // Jakarta
-      { lat: 10.4806, lon: -66.9036 }, // Caracas
-    ],
-  },
-  {
-    name: "Tiger",
-    scientificName: "Panthera tigris",
-    diet: "Carnivore",
-    species: "Mammal",
-    image: "/images/tiger.jpg",
-    locations: [
-      { lat: 22.5726, lon: 88.3639 }, // Kolkata
-      { lat: 23.8103, lon: 90.4125 }, // Dhaka
-    ],
-  },
-  {
-    name: "Tortoise",
-    scientificName: "Testudinidae",
-    diet: "Herbivore",
-    species: "Reptile",
-    image: "/images/tortoise.jpg",
-    locations: [
-      { lat: 25.6628, lon: 23.4162 }, // Sahara
-      { lat: 33.6844, lon: 73.0479 }, // Pakistan
-    ],
-  },
-  {
-    name: "Elephant",
-    scientificName: "Loxodonta africana",
-    diet: "Herbivore",
-    species: "Mammal",
-    image: "/images/elephant.jpg",
-    locations: [
-      { lat: -1.9577, lon: 37.2972 }, // Kenya
-      { lat: 17.366, lon: 78.476 }, // India
-    ],
-  },
-  {
-    name: "Wolf",
-    scientificName: "Canis lupus",
-    diet: "Carnivore",
-    species: "Mammal",
-    image: "/images/wolf.jpg",
-    locations: [
-      { lat: 60.1699, lon: 24.9384 }, // Helsinki
-      { lat: 45.4215, lon: -75.6997 }, // Ottawa
-    ],
-  },
-  {
-    name: "Rabbit",
-    scientificName: "Oryctolagus cuniculus",
-    diet: "Herbivore",
-    species: "Mammal",
-    image: "/images/rabbit.jpg",
-    locations: [
-      { lat: 51.1657, lon: 10.4515 }, // Germany
-      { lat: 48.8566, lon: 2.3522 }, // Paris
-    ],
-  },
-  {
-    name: "Crocodile",
-    scientificName: "Crocodylus niloticus",
-    diet: "Carnivore",
-    species: "Reptile",
-    image: "/images/crocodile.jpg",
-    locations: [
-      { lat: 29.9511, lon: -90.0715 }, // Louisiana
-      { lat: -12.4634, lon: 130.8456 }, // Darwin, Australia
-    ],
-  },
-  {
-    name: "Bear",
-    scientificName: "Ursus arctos",
-    diet: "Omnivore",
-    species: "Mammal",
-    image: "/images/bear.jpg",
-    locations: [
-      { lat: 61.524, lon: 105.3188 }, // Russia
-      { lat: 64.2008, lon: -149.4937 }, // Alaska
-    ],
-  },
-  {
-    name: "Monarch Butterfly",
-    scientificName: "Danaus plexippus",
-    diet: "Herbivore",
-    species: "Insect",
-    image: "/images/monarch.jpg",
-    description: "A striking orange and black butterfly known for its long migrations.",
-    locations: [],
-  },
-  {
-    name: "Honey Bee",
-    scientificName: "Apis mellifera",
-    diet: "Herbivore",
-    species: "Insect",
-    image: "/images/honeybee.jpg",
-    description: "A social insect vital for pollination, recognized by its fuzzy yellow and black body.",
-    locations: [],
-  },
-  {
-    name: "House Sparrow",
-    scientificName: "Passer domesticus",
-    diet: "Omnivore",
-    species: "Bird",
-    image: "/images/sparrow.jpg",
-    description: "A small, brown and gray bird commonly found in urban areas.",
-    locations: [],
-  },
-  {
-    name: "Bald Eagle",
-    scientificName: "Haliaeetus leucocephalus",
-    diet: "Carnivore",
-    species: "Bird",
-    image: "/images/baldeagle.jpg",
-    description: "A large bird of prey with a white head, symbol of the United States.",
-    locations: [],
-  },
-  {
-    name: "Ladybug",
-    scientificName: "Coccinella septempunctata",
-    diet: "Omnivore",
-    species: "Insect",
-    image: "/images/ladybug.jpg",
-    description: "A small, round beetle with red and black spots, helpful for pest control.",
-    locations: [],
-  },
-];
+// animalData removed; animals will be shown dynamically from API results
 
 export default function HomePage() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -185,7 +29,7 @@ export default function HomePage() {
   };
   const [sightings, setSightings] = useState<Sighting[]>([]);
   const [loading, setLoading] = useState(false);
-  // Geocode location and fetch sightings
+  // Geocode location and fetch sightings from iNaturalist and eBird
   async function handleLocationSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!location) return;
@@ -207,18 +51,30 @@ export default function HomePage() {
     const apiUrl = `https://api.inaturalist.org/v1/observations?lat=${lat}&lng=${lon}&radius=${radiusKm}&per_page=50&order=desc&order_by=created_at&verifiable=true&photos=true`;
     const sightRes = await fetch(apiUrl);
     const sightData = await sightRes.json();
-    setSightings(sightData.results || []);
+    let allResults = sightData.results || [];
+    // Fetch bird sightings from eBird (public API, returns recent birds)
+    try {
+      const ebirdRes = await fetch(`https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lon}&dist=13`, {
+        headers: { 'X-eBirdApiToken': 'sample' } // Replace 'sample' with your eBird API token
+      });
+      if (ebirdRes.ok) {
+        const ebirdData = await ebirdRes.json();
+        // eBird results: { comName, sciName, lat, lng }
+        const ebirdSightings = ebirdData.map((bird: any) => ({
+          geojson: { coordinates: [bird.lng, bird.lat] },
+          taxon: { name: bird.sciName },
+          ebirdCommon: bird.comName,
+        }));
+        allResults = [...allResults, ...ebirdSightings];
+      }
+    } catch (err) {
+      // Ignore eBird errors for now
+    }
+    setSightings(allResults);
     setLoading(false);
   }
-  // Improved matching: substring and case-insensitive for both names
-  const sightingNames = sightings
-    .map(s => s.taxon && s.taxon.name && s.taxon.name.toLowerCase())
-    .filter(Boolean);
-  const filteredAnimals = animalData.filter(animal => {
-    const common = animal.name.toLowerCase();
-    const scientific = animal.scientificName ? animal.scientificName.toLowerCase() : "";
-    return sightingNames.some(name => typeof name === "string" && (name.includes(common) || name.includes(scientific)));
-  });
+  // Use all sightings as animals to display
+  const filteredAnimals = sightings;
   // Map markers for sightings
   const allLocations = sightings.map(s => ({ lat: s.geojson.coordinates[1], lon: s.geojson.coordinates[0] }));
   let bbox = "-0.09,51.505,-0.08,51.51";
@@ -397,23 +253,34 @@ export default function HomePage() {
           {filteredAnimals.length === 0 && coords && !loading && (
             <p className="text-gray-400 col-span-3">No animals found within 8 miles of this location.</p>
           )}
-          {filteredAnimals.map(animal => (
-            <div key={animal.name} className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center">
-              <div className="w-32 h-32 mb-4 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
-                {animal.image ? (
-                  <Image src={animal.image} alt={animal.name} width={128} height={128} className="object-cover w-full h-full rounded-full" />
-                ) : (
-                  <span className="text-gray-400">No image</span>
+          {filteredAnimals.map((animal, idx) => {
+            // Try to get image from iNaturalist photo, fallback to none
+            let imageUrl = "";
+            if (animal.photos && animal.photos.length > 0) {
+              imageUrl = animal.photos[0].url.replace("square.", "medium.");
+            }
+            // Name and scientific name
+            const name = animal.taxon?.preferred_common_name || animal.ebirdCommon || animal.taxon?.name || "Unknown";
+            const sciName = animal.taxon?.name || "";
+            // Description (if available)
+            const desc = animal.taxon?.wikipedia_summary || "";
+            return (
+              <div key={name + idx} className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center">
+                <div className="w-32 h-32 mb-4 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                  {imageUrl ? (
+                    <Image src={imageUrl} alt={name} width={128} height={128} className="object-cover w-full h-full rounded-full" />
+                  ) : (
+                    <span className="text-gray-400">No image</span>
+                  )}
+                </div>
+                <h2 className="text-xl font-semibold mb-2">{name}</h2>
+                <p className="text-gray-400 mb-1">Scientific Name: {sciName}</p>
+                {desc && (
+                  <p className="text-gray-300 text-center mt-2 text-sm">{desc}</p>
                 )}
               </div>
-              <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
-              <p className="text-gray-400 mb-1">Species: {animal.species}</p>
-              <p className="text-gray-400 mb-1">Diet: {animal.diet}</p>
-              {animal.description && (
-                <p className="text-gray-300 text-center mt-2 text-sm">{animal.description}</p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
