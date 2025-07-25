@@ -180,9 +180,10 @@ export default function HomePage() {
         Your browser does not support the video tag.
       </video>
 
-      {/* Top bar with Help/Feedback and Login/Signup or Profile */}
-      <div className="w-full flex justify-end items-center p-4 z-10 relative">
-        <div className="flex flex-col items-end mr-4 gap-2">
+      {/* Top bar with Login/Signup or Profile */}
+      <div className="w-full flex justify-between items-center p-4 z-10 relative">
+        {/* Help/Feedback buttons on left */}
+        <div className="flex flex-col items-start gap-2">
           <button
             className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein"
             onClick={() => setShowHelp(true)}
@@ -198,6 +199,8 @@ export default function HomePage() {
             Feedback
           </button>
         </div>
+        {/* Login/Signup/Profile on right */}
+        <div className="flex items-center">
         {!user ? (
           <>
             <button
@@ -224,10 +227,9 @@ export default function HomePage() {
               </div>
             )}
             <span className="font-semibold">{user.name}</span>
-            <span className="text-gray-400">{user.email}</span>
             {/* Settings icon */}
             <button
-              className="p-2 rounded-full hover:bg-gray-200"
+              className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300"
               onClick={() => {
                 setEditName(user.name);
                 setEditPassword(user.password || "");
@@ -316,14 +318,12 @@ export default function HomePage() {
 
       {/* Auth Modal */}
       {showAuth && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-20">
-          <div className="bg-white text-black rounded-lg p-8 min-w-[300px] relative animate-fadein">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black"
-              onClick={() => setShowAuth(null)}
-            >
-              ×
-            </button>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-white bg-opacity-90 rounded-xl shadow-2xl p-10 max-w-lg w-full relative flex flex-col items-center animate-fadein">
+            ...existing code...
+          </div>
+        </div>
+      )}
             <h2 className="text-xl font-bold mb-4">{showAuth === 'login' ? 'Log In' : 'Sign Up'}</h2>
             <form
               onSubmit={e => {
@@ -683,7 +683,7 @@ export default function HomePage() {
                     background: selectedAnimal.rarity === 'rare' ? 'purple' : 'red',
                     transition: 'width 0.3s',
                   }}
-                />
+                ></div>
               </div>
               <span className="ml-2 text-sm font-bold" style={{ color: selectedAnimal.rarity === 'rare' ? 'purple' : 'red' }}>
                 {selectedAnimal.rarity === 'rare' ? 'Rare' : 'Common'}
