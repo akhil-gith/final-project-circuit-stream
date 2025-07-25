@@ -4,16 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { User as UserIcon } from "lucide-react";
 
-type Animal = {
-  name: string; // Common name
-  scientificName?: string; // Scientific name
-  diet?: string;
-  species?: string;
-  image?: string;
-  description?: string;
-  locations?: { lat: number; lon: number }[];
-};
-
 // animalData removed; animals will be shown dynamically from API results
 
 export default function HomePage() {
@@ -21,12 +11,33 @@ export default function HomePage() {
   const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
   const [location, setLocation] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
-  type Sighting = {
+  // Sighting types for iNaturalist, eBird, GBIF
+  type INatSighting = {
     geojson: { coordinates: [number, number] };
-    taxon?: { name?: string };
-    // Add more fields as needed, but avoid 'any'
-    // For now, only use known fields
+    taxon?: {
+      name?: string;
+      preferred_common_name?: string;
+      wikipedia_summary?: string;
+    };
+    photos?: { url: string }[];
   };
+  type EBirdSighting = {
+    geojson: { coordinates: [number, number] };
+    ebirdCommon?: string;
+    sciName?: string;
+    taxon?: { name?: string };
+    comName?: string;
+  };
+  type GBIFSighting = {
+    geojson: { coordinates: [number, number] };
+    gbifSpecies?: string;
+    gbifScientific?: string;
+    gbifClass?: string;
+    gbifOrder?: string;
+    gbifFamily?: string;
+    gbifGenus?: string;
+  };
+  type Sighting = INatSighting | EBirdSighting | GBIFSighting;
   const [sightings, setSightings] = useState<Sighting[]>([]);
   const [loading, setLoading] = useState(false);
   // Geocode location and fetch sightings from iNaturalist and eBird
@@ -68,7 +79,7 @@ export default function HomePage() {
         }));
         allResults = [...allResults, ...ebirdSightings];
       }
-    } catch (err) {
+    } catch {
       // Ignore eBird errors for now
     }
 
@@ -96,7 +107,7 @@ export default function HomePage() {
         }));
         allResults = [...allResults, ...gbifSightings];
       }
-    } catch (err) {
+    } catch {
       // Ignore GBIF errors for now
     }
 
@@ -287,36 +298,31 @@ export default function HomePage() {
             // Type guards for iNaturalist, eBird, GBIF
             let imageUrl = "";
             // iNaturalist: photos array
-            if ('photos' in animal && Array.isArray((animal as any).photos) && (animal as any).photos.length > 0 && (animal as any).photos[0].url) {
-              imageUrl = (animal as any).photos[0].url.replace("square.", "medium.");
+            if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0 && animal.photos[0].url) {
+              imageUrl = animal.photos[0].url.replace("square.", "medium.");
             }
             // Name and scientific name
             let name = "Unknown";
             let sciName = "";
             let desc = "";
-            if (animal.taxon) {
-              // iNaturalist: try to get extra fields via type assertion
-              const taxon = animal.taxon as any;
-              name = taxon.preferred_common_name || taxon.name || "Unknown";
-              sciName = taxon.name || "";
-              desc = taxon.wikipedia_summary || "";
-            } else if ((animal as any).ebirdCommon) {
-              // eBird custom result
-              name = (animal as any).ebirdCommon || "Unknown";
-              sciName = (animal as any).sciName || "";
-            } else if ((animal as any).comName || (animal as any).sciName) {
-              // eBird fallback
-              name = (animal as any).comName || "Unknown";
-              sciName = (animal as any).sciName || "";
-            } else if ((animal as any).gbifSpecies || (animal as any).gbifScientific) {
-              // GBIF result
-              name = (animal as any).gbifSpecies || "Unknown";
-              sciName = (animal as any).gbifScientific || "";
+            if ('taxon' in animal && animal.taxon) {
+              name = animal.taxon.preferred_common_name || animal.taxon.name || "Unknown";
+              sciName = animal.taxon.name || "";
+              desc = animal.taxon.wikipedia_summary || "";
+            } else if ('ebirdCommon' in animal) {
+              name = animal.ebirdCommon || "Unknown";
+              sciName = 'sciName' in animal ? animal.sciName || "" : "";
+            } else if ('comName' in animal || 'sciName' in animal) {
+              name = 'comName' in animal ? animal.comName || "Unknown" : "Unknown";
+              sciName = 'sciName' in animal ? animal.sciName || "" : "";
+            } else if ('gbifSpecies' in animal || 'gbifScientific' in animal) {
+              name = animal.gbifSpecies || "Unknown";
+              sciName = animal.gbifScientific || "";
               desc = [
-                (animal as any).gbifClass,
-                (animal as any).gbifOrder,
-                (animal as any).gbifFamily,
-                (animal as any).gbifGenus
+                animal.gbifClass,
+                animal.gbifOrder,
+                animal.gbifFamily,
+                animal.gbifGenus
               ].filter(Boolean).join(", ");
             }
             return (
