@@ -553,7 +553,6 @@ export default function HomePage() {
                   {(() => {
                     const reasons: string[] = [];
                     const lowerName = selectedAnimal.name.toLowerCase();
-                    const lowerSci = selectedAnimal.sciName.toLowerCase();
                     const lowerDesc = selectedAnimal.desc.toLowerCase();
                     if (lowerName.includes('poison') || lowerDesc.includes('poison')) reasons.push('May be poisonous if touched or ingested.');
                     if (lowerName.includes('venom') || lowerDesc.includes('venom')) reasons.push('May inject venom through bite or sting.');
