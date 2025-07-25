@@ -54,6 +54,7 @@ export default function HomePage() {
     rarity: 'common' | 'rare';
     imageUrl: string;
     isDangerous?: boolean;
+    facts?: string[];
   } | null>(null);
   // Geocode location and fetch sightings from iNaturalist and eBird
   async function handleLocationSearch(e: React.FormEvent) {
@@ -655,7 +656,7 @@ markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).joi
               <div className="w-full mt-4 mb-2">
                 <h3 className="text-lg md:text-xl font-bold text-blue-700 mb-2 text-center">Special Facts</h3>
                 <ul className="list-disc list-inside text-left text-blue-800 text-base md:text-lg mb-4">
-                  {selectedAnimal.facts.map((fact, i) => (
+                  {selectedAnimal.facts.map((fact: string, i: number) => (
                     <li key={i} className="mb-2 md:mb-3">{fact}</li>
                   ))}
                 </ul>
