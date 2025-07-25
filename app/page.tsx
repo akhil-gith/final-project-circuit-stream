@@ -151,24 +151,6 @@ export default function HomePage() {
   const filteredAnimals = sightings;
   // Map markers for sightings
   const allLocations = sightings.map(s => ({ lat: s.geojson.coordinates[1], lon: s.geojson.coordinates[0] }));
-let bbox = "-0.09,51.505,-0.08,51.51";
-if (coords) {
-  bbox = `${coords.lon-0.1},${coords.lat-0.1},${coords.lon+0.1},${coords.lat+0.1}`;
-} else if (allLocations.length > 0) {
-  const lats = allLocations.map(loc => loc.lat);
-  const lons = allLocations.map(loc => loc.lon);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLon = Math.min(...lons);
-  const maxLon = Math.max(...lons);
-  bbox = `${minLon-0.5},${minLat-0.5},${maxLon+0.5},${maxLat+0.5}`;
-}
-// Marker string: blue for user, red for animals
-let markerString = "";
-if (coords) {
-  markerString += `&marker=${coords.lon},${coords.lat},blue`;
-}
-markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).join("");
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
@@ -465,11 +447,14 @@ markerString += allLocations.map(loc => `&marker=${loc.lon},${loc.lat},red`).joi
           <div className="w-full h-full rounded-2xl border-8 border-white border-opacity-30 bg-white bg-opacity-10 shadow-2xl" style={{boxShadow: '0 0 32px 8px rgba(255,255,255,0.2)'}}>
             {/* Use static OpenStreetMap marker images for better visibility */}
             <div className="w-full h-full rounded-2xl relative" style={{ minHeight: '384px' }}>
-              <img
+              <Image
                 src={`https://staticmap.openstreetmap.de/staticmap.php?center=${coords ? coords.lat + ',' + coords.lon : '51.505,-0.09'}&zoom=12&size=800x384${coords ? `&markers=${coords.lat},${coords.lon},lightblue1` : ''}${allLocations.length > 0 ? `&markers=${allLocations.map(loc => loc.lat + ',' + loc.lon + ',red').join('|')}` : ''}`}
                 alt="Animal Map"
+                width={800}
+                height={384}
                 className="absolute top-0 left-0 w-full h-full object-cover rounded-2xl"
                 style={{ border: 'none', background: 'transparent' }}
+                priority
               />
             </div>
           </div>
