@@ -336,9 +336,26 @@ export default function HomePage() {
                 animal.gbifGenus
               ].filter(Boolean).join(", ");
             }
+            // Danger/poison keyword check
+            const dangerKeywords = [
+              "poison", "venom", "danger", "toxic", "bite", "sting", "attack", "aggressive", "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish", "mosquito", "wasp", "bee", "ant", "centipede", "millipede", "lethal", "predator", "disease", "infection", "injury"
+            ];
+            const lowerName = name.toLowerCase();
+            const lowerSci = sciName.toLowerCase();
+            const lowerDesc = desc.toLowerCase();
+            const isDangerous = dangerKeywords.some(kw => lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw));
             return (
-              <div key={name + idx} className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col items-center">
-                <div className="w-32 h-32 mb-4 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+              <div
+                key={name + idx}
+                className={`rounded-lg shadow-lg p-6 flex flex-col items-center ${isDangerous ? 'bg-red-700 bg-opacity-70' : 'bg-gray-800 bg-opacity-50'}`}
+                style={{
+                  transition: 'background 0.3s',
+                  border: isDangerous ? '2px solid #ff0000' : '2px solid rgba(255,255,255,0.1)',
+                  boxShadow: isDangerous ? '0 0 24px 4px #ff0000' : '0 0 24px 4px rgba(255,255,255,0.1)',
+                  color: isDangerous ? '#fff' : undefined
+                }}
+              >
+                <div className="w-32 h-32 mb-4 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
                   {imageUrl ? (
                     <Image src={imageUrl} alt={name} width={128} height={128} className="object-cover w-full h-full rounded-full" />
                   ) : (
@@ -349,6 +366,9 @@ export default function HomePage() {
                 <p className="text-gray-400 mb-1">Scientific Name: {sciName}</p>
                 {desc && (
                   <p className="text-gray-300 text-center mt-2 text-sm">{desc}</p>
+                )}
+                {isDangerous && (
+                  <p className="text-red-200 text-center mt-2 text-sm font-bold">Warning: This animal may be dangerous or poisonous!</p>
                 )}
               </div>
             );
