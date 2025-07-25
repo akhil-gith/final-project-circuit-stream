@@ -10,6 +10,7 @@ type Animal = {
   diet?: string;
   species?: string;
   image?: string;
+  description?: string;
   locations?: { lat: number; lon: number }[];
 };
 
@@ -124,6 +125,51 @@ const animalData: Animal[] = [
       { lat: 64.2008, lon: -149.4937 }, // Alaska
     ],
   },
+  {
+    name: "Monarch Butterfly",
+    scientificName: "Danaus plexippus",
+    diet: "Herbivore",
+    species: "Insect",
+    image: "/images/monarch.jpg",
+    description: "A striking orange and black butterfly known for its long migrations.",
+    locations: [],
+  },
+  {
+    name: "Honey Bee",
+    scientificName: "Apis mellifera",
+    diet: "Herbivore",
+    species: "Insect",
+    image: "/images/honeybee.jpg",
+    description: "A social insect vital for pollination, recognized by its fuzzy yellow and black body.",
+    locations: [],
+  },
+  {
+    name: "House Sparrow",
+    scientificName: "Passer domesticus",
+    diet: "Omnivore",
+    species: "Bird",
+    image: "/images/sparrow.jpg",
+    description: "A small, brown and gray bird commonly found in urban areas.",
+    locations: [],
+  },
+  {
+    name: "Bald Eagle",
+    scientificName: "Haliaeetus leucocephalus",
+    diet: "Carnivore",
+    species: "Bird",
+    image: "/images/baldeagle.jpg",
+    description: "A large bird of prey with a white head, symbol of the United States.",
+    locations: [],
+  },
+  {
+    name: "Ladybug",
+    scientificName: "Coccinella septempunctata",
+    diet: "Omnivore",
+    species: "Insect",
+    image: "/images/ladybug.jpg",
+    description: "A small, round beetle with red and black spots, helpful for pest control.",
+    locations: [],
+  },
 ];
 
 export default function HomePage() {
@@ -164,16 +210,14 @@ export default function HomePage() {
     setSightings(sightData.results || []);
     setLoading(false);
   }
-  // Only show animals present in sightings (match by common or scientific name)
-  const foundNames = new Set(
-    sightings
-      .map(s => s.taxon && s.taxon.name && s.taxon.name.toLowerCase())
-      .filter(Boolean)
-  );
+  // Improved matching: substring and case-insensitive for both names
+  const sightingNames = sightings
+    .map(s => s.taxon && s.taxon.name && s.taxon.name.toLowerCase())
+    .filter(Boolean);
   const filteredAnimals = animalData.filter(animal => {
     const common = animal.name.toLowerCase();
     const scientific = animal.scientificName ? animal.scientificName.toLowerCase() : "";
-    return foundNames.has(common) || foundNames.has(scientific);
+    return sightingNames.some(name => typeof name === "string" && (name.includes(common) || name.includes(scientific)));
   });
   // Map markers for sightings
   const allLocations = sightings.map(s => ({ lat: s.geojson.coordinates[1], lon: s.geojson.coordinates[0] }));
@@ -365,6 +409,9 @@ export default function HomePage() {
               <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
               <p className="text-gray-400 mb-1">Species: {animal.species}</p>
               <p className="text-gray-400 mb-1">Diet: {animal.diet}</p>
+              {animal.description && (
+                <p className="text-gray-300 text-center mt-2 text-sm">{animal.description}</p>
+              )}
             </div>
           ))}
         </div>
