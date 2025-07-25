@@ -167,84 +167,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden" style={{fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif'}}>
-      {/* Jungle Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="fixed top-0 left-0 w-full h-full object-cover z-0"
-        style={{ pointerEvents: 'none' }}
-      >
-        <source src="/final-project-circuit-stream/videos/jungle.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-
-      {/* Top bar with Help/Feedback and Login/Signup or Profile */}
-      <div className="w-full flex justify-end items-center p-4 z-10 relative">
-        <div className="flex flex-col items-end mr-4 gap-2">
-          <button
-            className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold animate-fadein"
-            onClick={() => setShowHelp(true)}
-            title="Help / Tutorial"
-          >
-            Help
-          </button>
-          <button
-            className="bg-blue-500 text-white px-3 py-2 rounded shadow hover:bg-blue-600 font-bold animate-fadein"
-            onClick={() => setShowFeedback(true)}
-            title="Send Feedback"
-          >
-            Feedback
-          </button>
-        </div>
-        {!user ? (
-          <>
-            <button
-              className="bg-white text-black px-4 py-2 rounded mr-2 hover:bg-gray-200"
-              onClick={() => setShowAuth('login')}
-            >
-              Log In
-            </button>
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              onClick={() => setShowAuth('signup')}
-            >
-              Sign Up
-            </button>
-          </>
-        ) : (
-          <div className="flex items-center space-x-4">
-            {/* Custom profile logo */}
-            {user.photoUrl ? (
-              <Image src={user.photoUrl} alt="Profile" width={32} height={32} className="rounded-full border-2 border-blue-400 shadow-lg animate-swoosh" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-green-400 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">{user.name ? user.name[0].toUpperCase() : 'U'}</span>
-              </div>
-            )}
-            <span className="font-semibold">{user.name}</span>
-            {/* Settings icon - make button white */}
-            <button
-              className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300"
-              onClick={() => {
-                setEditName(user.name);
-                setEditPassword(user.password || "");
-                setShowSettings(true);
-              }}
-              title="Settings"
-            >
-              <SettingsIcon className="w-6 h-6 text-gray-700" />
-            </button>
-            <button
-              className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200"
-              onClick={() => setUser(null)}
-            >
-              Log Out
-            </button>
-          </div>
-        )}
-      {/* Auth Modal - moved to top-level, outside top bar and conditional branches */}
+      {/* Auth Modal - moved to be a direct child of the top-level div */}
       {showAuth && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[999]">
           <div className="bg-white text-black rounded-lg p-8 min-w-[300px] relative animate-fadein">
@@ -310,7 +233,7 @@ export default function HomePage() {
           </div>
         </div>
       )}
-      </div>
+      {/* ...existing code... */}
       {/* ...existing code... */}
 
       {/* ...existing code... */}
