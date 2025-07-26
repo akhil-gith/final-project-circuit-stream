@@ -422,70 +422,79 @@ export default function HomePage() {
 
   // Enhanced process animal data with comprehensive descriptions
   const processAnimalData = (animal: Sighting, idx: number) => {
-    let imageUrl = "";
-    if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0) {
-      imageUrl = animal.photos[0].url.replace("square.", "medium.");
-    }
+  let imageUrl = "";
+  if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0) {
+    imageUrl = animal.photos[0].url.replace("square.", "medium.");
+  }
 
-    let name = "Unknown";
-    let sciName = "";
-    let desc = "";
-    let source: 'inat' | 'ebird' | 'gbif' = 'inat';
+  let name = "Unknown";
+  let sciName = "";
+  let desc = "";
+  let source: 'inat' | 'ebird' | 'gbif' = 'inat';
 
-    if ('taxon' in animal && animal.taxon) {
-      const taxon = animal.taxon as INatTaxonFull;
-      name = taxon.preferred_common_name || taxon.name || "Unknown";
-      sciName = taxon.name || "";
-      desc = taxon.wikipedia_summary || "";
-      source = 'inat';
-    } else if ('ebirdCommon' in animal) {
-      name = animal.ebirdCommon || "Unknown";
-      sciName = ('sciName' in animal) ? animal.sciName || "" : "";
-      desc = ""; // eBird usually doesn't provide a description
-      source = 'ebird';
-    } else if ('gbifSpecies' in animal) {
-      name = animal.gbifSpecies || "Unknown";
-      sciName = animal.gbifScientific || "";
-      desc = [animal.gbifClass, animal.gbifOrder, animal.gbifFamily, animal.gbifGenus]
-        .filter(Boolean).join(", ");
-      source = 'gbif';
-    }
+  // iNaturalist: covers all animal types
+  if ('taxon' in animal && animal.taxon) {
+    const taxon = animal.taxon as INatTaxonFull;
+    name = taxon.preferred_common_name || taxon.name || "Unknown";
+    sciName = taxon.name || "";
+    desc = taxon.wikipedia_summary || "";
+    source = 'inat';
+  }
+  // eBird: birds
+  else if ('ebirdCommon' in animal) {
+    name = animal.ebirdCommon || "Unknown";
+    sciName = ('sciName' in animal) ? animal.sciName || "" : "";
+    desc = ""; // eBird usually doesn't provide a description
+    source = 'ebird';
+  }
+  // GBIF: all animal types (mammals, insects, fish, etc.)
+  else if ('gbifSpecies' in animal) {
+    name = animal.gbifSpecies || "Unknown";
+    sciName = animal.gbifScientific || "";
+    desc = [
+      animal.gbifClass ? `Class: ${animal.gbifClass}` : "",
+      animal.gbifOrder ? `Order: ${animal.gbifOrder}` : "",
+      animal.gbifFamily ? `Family: ${animal.gbifFamily}` : "",
+      animal.gbifGenus ? `Genus: ${animal.gbifGenus}` : ""
+    ].filter(Boolean).join(", ");
+    source = 'gbif';
+  }
 
-    name = toTitleCase(name);
+  name = toTitleCase(name);
 
-    // Use API description if it's detailed enough, otherwise fallback
-    if (!desc || desc.length < 40) {
-      desc = generateComprehensiveDescription(name, sciName, source, animal as AdditionalInfo);
-    }
+  // Use API description if it's detailed enough, otherwise fallback
+  if (!desc || desc.length < 40) {
+    desc = generateComprehensiveDescription(name, sciName, source, animal as AdditionalInfo);
+  }
 
-    // Determine rarity
-    const lowerName = name.toLowerCase();
-    const lowerDesc = desc.toLowerCase();
-    const rarity: 'common' | 'rare' = (
-      lowerName.includes('rare') || 
-      lowerDesc.includes('rare') || 
-      lowerDesc.includes('endangered') || 
-      lowerDesc.includes('threatened')
-    ) ? 'rare' : 'common';
+  // Determine rarity
+  const lowerName = name.toLowerCase();
+  const lowerDesc = desc.toLowerCase();
+  const rarity: 'common' | 'rare' = (
+    lowerName.includes('rare') || 
+    lowerDesc.includes('rare') || 
+    lowerDesc.includes('endangered') || 
+    lowerDesc.includes('threatened')
+  ) ? 'rare' : 'common';
 
-    // Determine if dangerous
-    const isDangerous = dangerKeywords.some(kw =>
-      lowerName.includes(kw) || lowerDesc.includes(kw)
-    );
+  // Determine if dangerous
+  const isDangerous = dangerKeywords.some(kw =>
+    lowerName.includes(kw) || lowerDesc.includes(kw)
+  );
 
-    // Generate facts
-    const facts = generateAnimalFacts(name);
+  // Generate facts
+  const facts = generateAnimalFacts(name);
 
-    return { 
-      name, 
-      sciName, 
-      desc, 
-      rarity, 
-      imageUrl, 
-      isDangerous, 
-      facts,
-      key: name + idx 
-    };
+  return { 
+    name, 
+    sciName, 
+    desc, 
+    rarity, 
+    imageUrl, 
+    isDangerous, 
+    facts,
+    key: name + idx 
+  };
   };
 
   const filteredAnimals = filterAnimals(sightings);
