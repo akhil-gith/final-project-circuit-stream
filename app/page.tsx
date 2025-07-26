@@ -42,6 +42,7 @@ type SelectedAnimal = {
   desc: string;
   rarity: 'common' | 'rare';
   imageUrl: string;
+  isDangerous?: boolean;
   facts?: string[];
 };
 
@@ -62,6 +63,14 @@ type GBIFOccurrence = {
   order?: string;
   family?: string;
   genus?: string;
+};
+
+// Define additional info type for better type safety
+type AdditionalInfo = {
+  gbifClass?: string;
+  gbifOrder?: string;
+  gbifFamily?: string;
+  gbifGenus?: string;
 };
 
 export default function HomePage() {
@@ -109,7 +118,7 @@ export default function HomePage() {
   };
 
   // Enhanced description generator
-  const generateComprehensiveDescription = (name: string, sciName: string, source: 'inat' | 'ebird' | 'gbif', additionalInfo?: any): string => {
+  const generateComprehensiveDescription = (name: string, sciName: string, source: 'inat' | 'ebird' | 'gbif', additionalInfo?: AdditionalInfo): string => {
     const cleanName = name.toLowerCase();
     const cleanSciName = sciName.toLowerCase();
     
@@ -192,7 +201,7 @@ export default function HomePage() {
   };
 
   // Generate interesting facts based on animal type
-  const generateAnimalFacts = (name: string, sciName: string): string[] => {
+  const generateAnimalFacts = (name: string): string[] => {
     const cleanName = name.toLowerCase();
     
     const factDatabase: { [key: string]: string[] } = {
@@ -243,7 +252,12 @@ export default function HomePage() {
     'asteraceae', 'cactaceae', 'orchidaceae', 'solanaceae', 'brassicaceae', 'lamiaceae'
   ];
 
-  // Removed danger keywords - no longer showing warnings for dangerous animals
+  // Danger keywords for safety detection
+  const dangerKeywords = [
+    "poison", "venom", "danger", "toxic", "bite", "sting", "attack", "aggressive", 
+    "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", 
+    "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish"
+  ];
 
   // Main search function
   const handleLocationSearch = async (e: React.FormEvent) => {
@@ -440,8 +454,16 @@ export default function HomePage() {
     
     // Always ensure we have a comprehensive description
     if (!desc || desc.length < 100 || desc.split('.').length < 3) {
-      desc = generateComprehensiveDescription(name, sciName, source, animal);
+      desc = generateComprehensiveDescription(name, sciName, source, animal as AdditionalInfo);
     }
+
+    // Check if dangerous
+    const lowerName = name.toLowerCase();
+    const lowerSci = sciName.toLowerCase();
+    const lowerDesc = desc.toLowerCase();
+    const isDangerous = dangerKeywords.some(kw => 
+      lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw)
+    );
 
     // Determine rarity
     const rarity: 'common' | 'rare' = (
@@ -452,7 +474,7 @@ export default function HomePage() {
     ) ? 'rare' : 'common';
 
     // Generate facts
-    const facts = generateAnimalFacts(name, sciName);
+    const facts = generateAnimalFacts(name);
 
     return { 
       name, 
@@ -460,6 +482,7 @@ export default function HomePage() {
       desc, 
       rarity, 
       imageUrl, 
+      isDangerous, 
       facts,
       key: name + idx 
     };
@@ -637,7 +660,8 @@ export default function HomePage() {
               desc: addAnimalCard.desc,
               rarity: 'common',
               imageUrl: addAnimalCard.imageUrl,
-              facts: generateAnimalFacts(addAnimalCard.name, addAnimalCard.sciName)
+              isDangerous: false,
+              facts: generateAnimalFacts(addAnimalCard.name)
             })}
           >
             <div className="w-24 h-24 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
@@ -706,14 +730,7 @@ export default function HomePage() {
             <button
               className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100"
               onClick={() => {
-                // Generate a random name for Google users
-                const googleNames = ['Alex Johnson', 'Sam Wilson', 'Jordan Taylor', 'Casey Brown', 'Riley Davis'];
-                const randomName = googleNames[Math.floor(Math.random() * googleNames.length)];
-                setUser({ 
-                  name: randomName, 
-                  email: `${randomName.toLowerCase().replace(' ', '.')}@gmail.com`, 
-                  photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' 
-                });
+                setUser({ name: 'Google User', email: 'user@gmail.com', photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' });
                 setShowAuth(null);
               }}
             >
@@ -957,6 +974,25 @@ export default function HomePage() {
                 </ul>
               </div>
             )}
+            
+            {/* Danger warning */}
+            {selectedAnimal.isDangerous && (
+              <div className="w-full mt-4 mb-2">
+                <h3 className="text-xl font-bold text-red-700 mb-3 text-center">⚠️ Safety Warning</h3>
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                  <p className="text-red-800 text-base mb-3 font-semibold">This animal may be dangerous. Common risks include:</p>
+                  <ul className="list-disc list-inside text-red-700 text-base space-y-1">
+                    <li>May bite or sting when threatened</li>
+                    <li>Could carry diseases or toxins</li>
+                    <li>Maintain safe distance if encountered</li>
+                    <li>Contact local wildlife authorities if needed</li>
+                  </ul>
+                  <p className="text-red-800 text-base mt-3 font-semibold">
+                    Always observe wildlife from a safe distance and never attempt to feed or approach wild animals.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -977,59 +1013,28 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Map Section with Animal Locations */}
+      {/* Map Section */}
       {coords && (
         <div className="flex flex-col items-center w-full mb-8 z-10 relative">
           <div className="relative w-full max-w-2xl mx-auto rounded-lg overflow-hidden shadow-lg border-2 border-blue-400 bg-white bg-opacity-80">
-            {/* Generate map URL with animal markers */}
-            {(() => {
-              let mapUrl = `https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${coords.lon},${coords.lat}&z=10&l=map&size=650,350`;
-              
-              // Add main location marker (red)
-              mapUrl += `&pt=${coords.lon},${coords.lat},pm2rdm`;
-              
-              // Add animal location markers (blue) - limit to first 20 for API constraints
-              const animalMarkers = filteredAnimals.slice(0, 20).map(animal => {
-                const [lng, lat] = animal.geojson.coordinates;
-                return `${lng},${lat},pm2blm`;
-              }).join('~');
-              
-              if (animalMarkers) {
-                mapUrl += `~${animalMarkers}`;
-              }
-              
-              return (
-                <Image
-                  src={mapUrl}
-                  alt="Map showing animal locations"
-                  width={650}
-                  height={350}
-                  className="w-full h-72 object-cover"
-                  style={{ minHeight: '280px', background: '#e0e7ef' }}
-                />
-              );
-            })()}
-            
-            {/* Enhanced Map Legend */}
+            <Image
+              src={`https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${coords.lon},${coords.lat}&z=10&l=map&size=650,350&pt=${coords.lon},${coords.lat},pm2rdm`}
+              alt="Map of location"
+              width={650}
+              height={350}
+              className="w-full h-72 object-cover"
+              style={{ minHeight: '280px', background: '#e0e7ef' }}
+            />
+            {/* Map Legend */}
             <div className="absolute bottom-2 left-2 bg-white bg-opacity-95 rounded px-4 py-2 shadow text-sm flex flex-col gap-2 border border-gray-300">
               <div className="flex items-center gap-2">
                 <span className="inline-block w-4 h-4 rounded-full bg-red-600 border-2 border-white"></span>
-                <span className="font-semibold text-black">Your Search Location</span>
+                <span className="font-semibold text-black">Search Center</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-block w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></span>
-                <span className="font-semibold text-black">Animal Sightings ({Math.min(filteredAnimals.length, 20)})</span>
+                <span className="font-semibold text-black">Animal Sighting</span>
               </div>
-              {filteredAnimals.length > 20 && (
-                <p className="text-xs text-gray-600 mt-1">
-                  Showing first 20 of {filteredAnimals.length} sightings
-                </p>
-              )}
-            </div>
-            
-            {/* Animal count indicator */}
-            <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-              {filteredAnimals.length} Animals Found
             </div>
           </div>
         </div>
@@ -1081,9 +1086,15 @@ export default function HomePage() {
               return (
                 <div
                   key={processedAnimal.key}
-                  className="rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full transition-all duration-300 hover:scale-105 bg-gray-800 bg-opacity-50 border-2 border-gray-600"
+                  className={`rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full transition-all duration-300 hover:scale-105 ${
+                    processedAnimal.isDangerous 
+                      ? 'bg-red-700 bg-opacity-70 border-2 border-red-500' 
+                      : 'bg-gray-800 bg-opacity-50 border-2 border-gray-600'
+                  }`}
                   style={{
-                    boxShadow: '0 0 12px 2px rgba(255,255,255,0.1)',
+                    boxShadow: processedAnimal.isDangerous 
+                      ? '0 0 16px 2px #ff0000' 
+                      : '0 0 12px 2px rgba(255,255,255,0.1)',
                   }}
                   onClick={() => setSelectedAnimal({
                     name: processedAnimal.name,
@@ -1091,6 +1102,7 @@ export default function HomePage() {
                     desc: processedAnimal.desc,
                     rarity: processedAnimal.rarity,
                     imageUrl: processedAnimal.imageUrl,
+                    isDangerous: processedAnimal.isDangerous,
                     facts: processedAnimal.facts
                   })}
                 >
@@ -1111,6 +1123,11 @@ export default function HomePage() {
                   <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">
                     Scientific Name: {processedAnimal.sciName}
                   </p>
+                  {processedAnimal.isDangerous && (
+                    <p className="text-red-200 text-center mt-1 text-xs md:text-sm font-bold">
+                      ⚠️ Warning: This animal may be dangerous!
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -1135,7 +1152,8 @@ export default function HomePage() {
                     desc: animal.desc,
                     rarity: 'common',
                     imageUrl: animal.imageUrl,
-                    facts: generateAnimalFacts(animal.name, animal.sciName)
+                    isDangerous: false,
+                    facts: generateAnimalFacts(animal.name)
                   })}
                 >
                   <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
