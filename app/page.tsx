@@ -42,7 +42,6 @@ type SelectedAnimal = {
   desc: string;
   rarity: 'common' | 'rare';
   imageUrl: string;
-  isDangerous?: boolean;
   facts?: string[];
 };
 
@@ -109,6 +108,134 @@ export default function HomePage() {
     setTimeout(() => element.classList.remove('animate-press'), 300);
   };
 
+  // Enhanced description generator
+  const generateComprehensiveDescription = (name: string, sciName: string, source: 'inat' | 'ebird' | 'gbif', additionalInfo?: any): string => {
+    const cleanName = name.toLowerCase();
+    const cleanSciName = sciName.toLowerCase();
+    
+    // Enhanced animal descriptions database
+    const animalDescriptions: { [key: string]: string } = {
+      // Birds
+      'american robin': `The American Robin (${sciName}) is a widely distributed songbird found throughout North America. These medium-sized birds are easily recognizable by their brick-red breast, dark gray head, and cheerful song. Robins are ground foragers, often seen hopping across lawns searching for earthworms and insects. They build cup-shaped nests in trees and shrubs, typically laying 3-4 blue eggs. American Robins are considered harbingers of spring and play important roles in seed dispersal and insect control in their ecosystems.`,
+      
+      'blue jay': `The Blue Jay (${sciName}) is an intelligent and adaptable corvid known for its striking blue plumage, black necklace marking, and loud calls. These birds are highly social and exhibit complex behaviors including tool use, problem-solving, and the ability to mimic other bird calls. Blue Jays are omnivorous, feeding on nuts, seeds, insects, and occasionally eggs or nestlings. They cache thousands of acorns each fall, making them important contributors to forest regeneration. Their aggressive behavior helps protect smaller birds from predators.`,
+      
+      'northern cardinal': `The Northern Cardinal (${sciName}) is a vibrant songbird where males display brilliant red plumage while females show warm brown tones with red accents. Cardinals are non-migratory birds that mate for life and can live up to 15 years in the wild. They prefer dense shrubs and woodland edges, feeding primarily on seeds, grains, and fruits. Their distinctive "birdy-birdy-birdy" call is a common sound in eastern North America. Cardinals are the state bird of seven U.S. states and are beloved backyard visitors.`,
+      
+      'house sparrow': `The House Sparrow (${sciName}) is a small, social passerine bird originally from Europe and Asia but now found worldwide. Males have distinctive black bibs and chestnut markings, while females are brown and streaky. These highly adaptable birds thrive in urban environments, building nests in building crevices, traffic lights, and other human-made structures. House Sparrows are omnivorous, eating seeds, insects, and scraps. Despite their abundance, their populations have declined in some urban areas due to changes in architecture and food availability.`,
+      
+      // Mammals
+      'white-tailed deer': `The White-tailed Deer (${sciName}) is North America's most widespread deer species, recognizable by the distinctive white underside of their tail which they flash when alarmed. These graceful mammals are excellent swimmers and can run up to 30 mph. Bucks grow and shed antlers annually, while does typically give birth to 1-3 fawns in late spring. White-tailed deer are browsers, feeding on leaves, shoots, nuts, and fruits. They play crucial roles in their ecosystems but can become overabundant in areas without natural predators.`,
+      
+      'eastern gray squirrel': `The Eastern Gray Squirrel (${sciName}) is a highly intelligent and acrobatic rodent known for its bushy tail and excellent climbing abilities. These squirrels have exceptional spatial memory, allowing them to relocate thousands of buried nuts. They build two types of homes: leaf nests (dreys) in tree branches and dens in tree cavities. Gray squirrels are primarily herbivorous but occasionally eat insects, bird eggs, or small animals. Their scatter-hoarding behavior makes them important seed dispersers in forest ecosystems.`,
+      
+      'raccoon': `The Raccoon (${sciName}) is a highly adaptable, nocturnal mammal recognizable by its distinctive black mask and ringed tail. Known for their dexterous front paws and problem-solving abilities, raccoons are often called "nature's bandits." They are omnivorous, eating everything from fruits and nuts to small animals, eggs, and human garbage. Raccoons are excellent climbers and swimmers, and mothers are devoted to their young, teaching them essential survival skills. Their adaptability has allowed them to thrive in both wild and urban environments.`,
+      
+      // Marine life
+      'bottlenose dolphin': `The Bottlenose Dolphin (${sciName}) is one of the most intelligent marine mammals, known for their playful behavior, complex social structures, and remarkable communication abilities. These dolphins can live 40-60 years and have been observed using tools, teaching their young, and even displaying self-awareness. They hunt cooperatively, sometimes herding fish or using echolocation to locate prey buried in sand. Bottlenose dolphins form pods that can range from 2-15 individuals, though they may temporarily join larger groups. They play important roles in marine ecosystems as both predators and prey.`,
+      
+      // Reptiles
+      'eastern box turtle': `The Eastern Box Turtle (${sciName}) is a terrestrial turtle known for its ability to completely withdraw into its shell, which can be sealed shut like a box. These long-lived reptiles can survive over 100 years and have excellent homing abilities, often returning to the same territories throughout their lives. Box turtles are omnivorous, eating mushrooms, berries, insects, and small animals. They play important ecological roles as seed dispersers and help control insect populations. Unfortunately, habitat loss and road mortality threaten many populations.`,
+      
+      // Default descriptions by animal class/type
+      'bird': `This bird species (${sciName}) is part of the diverse avian community that plays crucial roles in ecosystems worldwide. Birds serve as pollinators, seed dispersers, and pest controllers while occupying various ecological niches. Most birds have excellent vision, complex social behaviors, and remarkable navigational abilities. They communicate through songs, calls, and visual displays, with many species showing high intelligence and adaptability. Birds face various challenges including habitat loss, climate change, and human interference, making conservation efforts essential for maintaining healthy populations.`,
+      
+      'mammal': `This mammal (${sciName}) belongs to the diverse group of warm-blooded vertebrates characterized by hair or fur, mammary glands, and complex social behaviors. Mammals occupy virtually every habitat on Earth and range from tiny shrews to massive whales. Most mammals give birth to live young and provide parental care, with many species showing remarkable intelligence, communication skills, and problem-solving abilities. They play vital roles in ecosystems as predators, prey, pollinators, and seed dispersers, contributing to the complex web of life that sustains biodiversity.`,
+      
+      'fish': `This fish species (${sciName}) is part of the incredibly diverse aquatic vertebrate group that has adapted to life in water environments worldwide. Fish possess gills for extracting oxygen from water, fins for swimming, and lateral line systems for detecting water movement and pressure changes. They occupy various ecological roles from filter feeders to apex predators, helping maintain balanced aquatic ecosystems. Many fish species show complex behaviors including schooling, territorial defense, and elaborate mating rituals. Healthy fish populations are indicators of aquatic ecosystem health.`,
+      
+      'reptile': `This reptile (${sciName}) belongs to the ancient group of cold-blooded vertebrates that includes snakes, lizards, turtles, and crocodilians. Reptiles are characterized by scaly skin, egg-laying reproduction (with some exceptions), and their ability to regulate body temperature through behavioral adaptations. They play important ecological roles as both predators and prey, helping control populations of insects, rodents, and other small animals. Many reptiles are long-lived and show remarkable adaptations to their environments, from desert survival to aquatic lifestyles.`,
+      
+      'amphibian': `This amphibian (${sciName}) represents the fascinating group of vertebrates that bridge aquatic and terrestrial environments. Most amphibians undergo metamorphosis, starting as aquatic larvae and developing into adults that can live on land. Their permeable skin makes them sensitive to environmental changes, making them important indicators of ecosystem health. Amphibians play crucial roles in food webs, consuming vast quantities of insects as adults while serving as prey for various predators. Many species face threats from habitat loss, pollution, and climate change.`,
+      
+      'insect': `This insect (${sciName}) belongs to the most diverse group of animals on Earth, with insects making up over half of all known species. Insects have three body segments, six legs, and often wings, allowing them to exploit virtually every ecological niche. They serve as pollinators, decomposers, predators, and prey, making them essential to ecosystem functioning. Many insects undergo complete metamorphosis, with distinct larval and adult stages. Their incredible diversity includes species that are social engineers, master architects, and crucial partners in plant reproduction.`
+    };
+
+    // Try to find specific description first
+    if (animalDescriptions[cleanName]) {
+      return animalDescriptions[cleanName];
+    }
+
+    // Check for partial matches
+    for (const [key, description] of Object.entries(animalDescriptions)) {
+      if (cleanName.includes(key) || key.includes(cleanName)) {
+        return description.replace(/\([^)]*\)/g, `(${sciName})`);
+      }
+    }
+
+    // Generate description based on source and classification
+    if (source === 'ebird' || cleanName.includes('bird') || cleanSciName.includes('aves')) {
+      return animalDescriptions['bird'].replace(/\([^)]*\)/g, `(${sciName})`);
+    }
+
+    if (additionalInfo?.gbifClass) {
+      const gbifClass = additionalInfo.gbifClass.toLowerCase();
+      if (gbifClass.includes('mammalia') || gbifClass.includes('mammal')) {
+        return animalDescriptions['mammal'].replace(/\([^)]*\)/g, `(${sciName})`);
+      }
+      if (gbifClass.includes('actinopterygii') || gbifClass.includes('fish')) {
+        return animalDescriptions['fish'].replace(/\([^)]*\)/g, `(${sciName})`);
+      }
+      if (gbifClass.includes('reptilia') || gbifClass.includes('reptile')) {
+        return animalDescriptions['reptile'].replace(/\([^)]*\)/g, `(${sciName})`);
+      }
+      if (gbifClass.includes('amphibia') || gbifClass.includes('amphibian')) {
+        return animalDescriptions['amphibian'].replace(/\([^)]*\)/g, `(${sciName})`);
+      }
+      if (gbifClass.includes('insecta') || gbifClass.includes('insect')) {
+        return animalDescriptions['insect'].replace(/\([^)]*\)/g, `(${sciName})`);
+      }
+    }
+
+    // Enhanced generic description with more detail
+    return `${name} (${sciName}) is a fascinating species that plays an important role in its ecosystem. This animal has evolved unique adaptations that allow it to thrive in its natural habitat, contributing to the complex web of life through its interactions with other species and the environment. Like all wildlife, ${name} faces various challenges in the modern world, making conservation efforts and habitat protection crucial for maintaining healthy populations. Understanding and appreciating this species helps us recognize the incredible diversity of life on Earth and our responsibility to protect it for future generations. Each individual animal contributes to ecosystem health through complex ecological relationships that support biodiversity and environmental stability.`;
+  };
+
+  // Generate interesting facts based on animal type
+  const generateAnimalFacts = (name: string, sciName: string): string[] => {
+    const cleanName = name.toLowerCase();
+    
+    const factDatabase: { [key: string]: string[] } = {
+      'american robin': [
+        'Robins can live up to 13 years in the wild',
+        'They can see ultraviolet light, helping them spot berries and insects',
+        'A robin\'s red breast is actually orange - the name comes from European robins',
+        'They migrate at night and can fly up to 250 miles per day'
+      ],
+      'blue jay': [
+        'Blue jays aren\'t actually blue - their feathers scatter light to appear blue',
+        'They can live up to 25 years and remember thousands of hiding spots',
+        'Blue jays can mimic hawk calls to steal food from other birds',
+        'A group of blue jays is called a "party" or "band"'
+      ],
+      'white-tailed deer': [
+        'Deer can jump up to 10 feet high and 30 feet long',
+        'They have excellent night vision, 5-6 times better than humans',
+        'Fawns are born with no scent to protect them from predators',
+        'Deer can run up to 40 mph and are excellent swimmers'
+      ],
+      'raccoon': [
+        'Raccoons have over 200 different sounds for communication',
+        'Their front paws are extremely sensitive and become more so when wet',
+        'They can remember solutions to problems for up to 3 years',
+        'Baby raccoons are called kits and stay with mom for about a year'
+      ]
+    };
+
+    // Return specific facts if available
+    if (factDatabase[cleanName]) {
+      return factDatabase[cleanName];
+    }
+
+    // Generate generic but informative facts
+    return [
+      `${name} has unique adaptations that help it survive in its environment`,
+      `This species plays an important role in maintaining ecosystem balance`,
+      `${name} has evolved specific behaviors for finding food and avoiding predators`,
+      `Conservation efforts help protect ${name} and its habitat for future generations`
+    ];
+  };
+
   // Plant keywords for filtering
   const plantKeywords = [
     'plant', 'tree', 'flower', 'grass', 'herb', 'shrub', 'bush', 'fungi', 'moss', 'algae', 
@@ -116,12 +243,7 @@ export default function HomePage() {
     'asteraceae', 'cactaceae', 'orchidaceae', 'solanaceae', 'brassicaceae', 'lamiaceae'
   ];
 
-  // Danger keywords for safety detection
-  const dangerKeywords = [
-    "poison", "venom", "danger", "toxic", "bite", "sting", "attack", "aggressive", 
-    "deadly", "harm", "fatal", "rabies", "scorpion", "snake", "spider", "shark", 
-    "bear", "wolf", "lion", "tiger", "crocodile", "alligator", "jellyfish"
-  ];
+  // Removed danger keywords - no longer showing warnings for dangerous animals
 
   // Main search function
   const handleLocationSearch = async (e: React.FormEvent) => {
@@ -223,16 +345,19 @@ export default function HomePage() {
     }
   };
 
-  // Add Animal functionality
+  // Enhanced Add Animal functionality with comprehensive description
   const handleAddAnimalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const input = addAnimalInput.trim();
     if (!input) return;
 
+    // Generate comprehensive description for added animals
+    const comprehensiveDesc = generateComprehensiveDescription(input, input, 'inat');
+
     setAddAnimalCard({
-      name: input,
+      name: toTitleCase(input),
       sciName: input,
-      desc: `No description available for ${input}.`,
+      desc: comprehensiveDesc,
       imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=256&h=256&q=80"
     });
     setShowAddAnimal(false);
@@ -281,7 +406,7 @@ export default function HomePage() {
     });
   };
 
-  // Process animal data
+  // Enhanced process animal data with comprehensive descriptions
   const processAnimalData = (animal: Sighting, idx: number) => {
     let imageUrl = "";
     if ('photos' in animal && Array.isArray(animal.photos) && animal.photos.length > 0) {
@@ -291,31 +416,32 @@ export default function HomePage() {
     let name = "Unknown";
     let sciName = "";
     let desc = "";
+    let source: 'inat' | 'ebird' | 'gbif' = 'inat';
 
     if ('taxon' in animal && animal.taxon) {
       const taxon = animal.taxon as INatTaxonFull;
       name = taxon.preferred_common_name || taxon.name || "Unknown";
       sciName = taxon.name || "";
       desc = taxon.wikipedia_summary || "";
+      source = 'inat';
     } else if ('ebirdCommon' in animal) {
       name = animal.ebirdCommon || "Unknown";
       sciName = ('sciName' in animal) ? animal.sciName || "" : "";
+      source = 'ebird';
     } else if ('gbifSpecies' in animal) {
       name = animal.gbifSpecies || "Unknown";
       sciName = animal.gbifScientific || "";
+      source = 'gbif';
       desc = [animal.gbifClass, animal.gbifOrder, animal.gbifFamily, animal.gbifGenus]
         .filter(Boolean).join(", ");
     }
 
     name = toTitleCase(name);
     
-    // Check if dangerous
-    const lowerName = name.toLowerCase();
-    const lowerSci = sciName.toLowerCase();
-    const lowerDesc = desc.toLowerCase();
-    const isDangerous = dangerKeywords.some(kw => 
-      lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw)
-    );
+    // Always ensure we have a comprehensive description
+    if (!desc || desc.length < 100 || desc.split('.').length < 3) {
+      desc = generateComprehensiveDescription(name, sciName, source, animal);
+    }
 
     // Determine rarity
     const rarity: 'common' | 'rare' = (
@@ -325,13 +451,18 @@ export default function HomePage() {
       lowerDesc.includes('threatened')
     ) ? 'rare' : 'common';
 
-    // Generate description if needed
-    let fullDesc = desc;
-    if (!fullDesc || fullDesc.split('.').length < 3) {
-      fullDesc = `${name} (${sciName}) is a fascinating animal species found in various habitats. This animal plays an important role in its ecosystem and continues to be studied by researchers. Learning about ${name} helps us appreciate biodiversity and nature.`;
-    }
+    // Generate facts
+    const facts = generateAnimalFacts(name, sciName);
 
-    return { name, sciName, desc: fullDesc, rarity, imageUrl, isDangerous, key: name + idx };
+    return { 
+      name, 
+      sciName, 
+      desc, 
+      rarity, 
+      imageUrl, 
+      facts,
+      key: name + idx 
+    };
   };
 
   const filteredAnimals = filterAnimals(sightings);
@@ -506,7 +637,7 @@ export default function HomePage() {
               desc: addAnimalCard.desc,
               rarity: 'common',
               imageUrl: addAnimalCard.imageUrl,
-              isDangerous: false
+              facts: generateAnimalFacts(addAnimalCard.name, addAnimalCard.sciName)
             })}
           >
             <div className="w-24 h-24 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
@@ -514,7 +645,7 @@ export default function HomePage() {
             </div>
             <h2 className="text-lg font-semibold mb-1 text-center">{addAnimalCard.name}</h2>
             <p className="text-gray-400 mb-0.5 text-xs text-center">Scientific Name: {addAnimalCard.sciName}</p>
-            <p className="text-gray-300 text-center mt-1 text-xs">{addAnimalCard.desc}</p>
+            <p className="text-gray-300 text-center mt-1 text-xs line-clamp-3">{addAnimalCard.desc.substring(0, 100)}...</p>
             <span className="absolute top-2 right-2 text-gray-400 text-xl font-bold">+</span>
             <span className="text-green-300 text-xs mt-2">Tap to view details</span>
           </div>
@@ -575,7 +706,14 @@ export default function HomePage() {
             <button
               className="bg-white border border-gray-300 text-black px-4 py-2 rounded w-full flex items-center justify-center gap-2 hover:bg-gray-100"
               onClick={() => {
-                setUser({ name: 'Google User', email: 'user@gmail.com', photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' });
+                // Generate a random name for Google users
+                const googleNames = ['Alex Johnson', 'Sam Wilson', 'Jordan Taylor', 'Casey Brown', 'Riley Davis'];
+                const randomName = googleNames[Math.floor(Math.random() * googleNames.length)];
+                setUser({ 
+                  name: randomName, 
+                  email: `${randomName.toLowerCase().replace(' ', '.')}@gmail.com`, 
+                  photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg' 
+                });
                 setShowAuth(null);
               }}
             >
@@ -738,10 +876,10 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Animal Detail Modal */}
+      {/* Enhanced Animal Detail Modal with Facts Section */}
       {selectedAnimal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-white bg-opacity-90 rounded-xl shadow-2xl p-10 max-w-lg w-full relative flex flex-col items-center">
+          <div className="bg-white bg-opacity-95 rounded-xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative flex flex-col items-center">
             {/* Add Animal button for added animals */}
             {addAnimalCard && selectedAnimal.name === addAnimalCard.name && (
               <button
@@ -780,43 +918,43 @@ export default function HomePage() {
               </div>
             )}
             
-            <h2 className="text-2xl font-bold mb-2 text-center text-black">{selectedAnimal.name}</h2>
-            <p className="mb-2 text-center text-gray-700">Scientific Name: {selectedAnimal.sciName}</p>
+            <h2 className="text-3xl font-bold mb-2 text-center text-black">{selectedAnimal.name}</h2>
+            <p className="mb-4 text-center text-gray-700 text-lg italic">Scientific Name: {selectedAnimal.sciName}</p>
             
             {/* Rarity indicator */}
-            <div className="w-full flex items-center justify-center mb-4">
-              <span className="mr-2 text-sm text-gray-700">Rarity:</span>
-              <div className="w-32 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-purple-700 flex items-center">
+            <div className="w-full flex items-center justify-center mb-6">
+              <span className="mr-3 text-lg text-gray-700 font-semibold">Rarity:</span>
+              <div className="w-40 h-6 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-purple-700 flex items-center">
                 <div
-                  className="h-4 rounded-full transition-all duration-300"
+                  className="h-6 rounded-full transition-all duration-300"
                   style={{
                     width: selectedAnimal.rarity === 'rare' ? '80%' : '20%',
                     background: selectedAnimal.rarity === 'rare' ? 'purple' : 'red',
                   }}
                 />
               </div>
-              <span className="ml-2 text-sm font-bold" style={{ color: selectedAnimal.rarity === 'rare' ? 'purple' : 'red' }}>
+              <span className="ml-3 text-lg font-bold" style={{ color: selectedAnimal.rarity === 'rare' ? 'purple' : 'red' }}>
                 {selectedAnimal.rarity === 'rare' ? 'Rare' : 'Common'}
               </span>
             </div>
             
-            <p className="text-base leading-relaxed text-center mb-2 text-black max-h-96 overflow-y-auto">
-              {selectedAnimal.desc}
-            </p>
-            
-            {/* Danger warning */}
-            {selectedAnimal.isDangerous && (
-              <div className="w-full mt-4 mb-2">
-                <h3 className="text-lg font-bold text-red-700 mb-2 text-center">⚠️ Safety Warning</h3>
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-                  <p className="text-red-800 text-sm mb-2">This animal may be dangerous. Common risks include:</p>
-                  <ul className="list-disc list-inside text-red-700 text-sm">
-                    <li>May bite or sting when threatened</li>
-                    <li>Could carry diseases or toxins</li>
-                    <li>Maintain safe distance if encountered</li>
-                    <li>Contact local wildlife authorities if needed</li>
-                  </ul>
-                </div>
+            {/* Description section */}
+            <div className="w-full mb-6">
+              <h3 className="text-xl font-bold text-black mb-3">About This Animal</h3>
+              <p className="text-base leading-relaxed text-black">
+                {selectedAnimal.desc}
+              </p>
+            </div>
+
+            {/* Interesting Facts section */}
+            {selectedAnimal.facts && selectedAnimal.facts.length > 0 && (
+              <div className="w-full mb-6">
+                <h3 className="text-xl font-bold text-black mb-3">🌟 Interesting Facts</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  {selectedAnimal.facts.map((fact, index) => (
+                    <li key={index} className="text-base text-gray-800">{fact}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
@@ -839,28 +977,59 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Map Section */}
+      {/* Map Section with Animal Locations */}
       {coords && (
         <div className="flex flex-col items-center w-full mb-8 z-10 relative">
           <div className="relative w-full max-w-2xl mx-auto rounded-lg overflow-hidden shadow-lg border-2 border-blue-400 bg-white bg-opacity-80">
-            <Image
-              src={`https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${coords.lon},${coords.lat}&z=10&l=map&size=650,350&pt=${coords.lon},${coords.lat},pm2rdm`}
-              alt="Map of location"
-              width={650}
-              height={350}
-              className="w-full h-72 object-cover"
-              style={{ minHeight: '280px', background: '#e0e7ef' }}
-            />
-            {/* Map Legend */}
+            {/* Generate map URL with animal markers */}
+            {(() => {
+              let mapUrl = `https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${coords.lon},${coords.lat}&z=10&l=map&size=650,350`;
+              
+              // Add main location marker (red)
+              mapUrl += `&pt=${coords.lon},${coords.lat},pm2rdm`;
+              
+              // Add animal location markers (blue) - limit to first 20 for API constraints
+              const animalMarkers = filteredAnimals.slice(0, 20).map(animal => {
+                const [lng, lat] = animal.geojson.coordinates;
+                return `${lng},${lat},pm2blm`;
+              }).join('~');
+              
+              if (animalMarkers) {
+                mapUrl += `~${animalMarkers}`;
+              }
+              
+              return (
+                <Image
+                  src={mapUrl}
+                  alt="Map showing animal locations"
+                  width={650}
+                  height={350}
+                  className="w-full h-72 object-cover"
+                  style={{ minHeight: '280px', background: '#e0e7ef' }}
+                />
+              );
+            })()}
+            
+            {/* Enhanced Map Legend */}
             <div className="absolute bottom-2 left-2 bg-white bg-opacity-95 rounded px-4 py-2 shadow text-sm flex flex-col gap-2 border border-gray-300">
               <div className="flex items-center gap-2">
                 <span className="inline-block w-4 h-4 rounded-full bg-red-600 border-2 border-white"></span>
-                <span className="font-semibold text-black">Search Center</span>
+                <span className="font-semibold text-black">Your Search Location</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-block w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></span>
-                <span className="font-semibold text-black">Animal Sighting</span>
+                <span className="font-semibold text-black">Animal Sightings ({Math.min(filteredAnimals.length, 20)})</span>
               </div>
+              {filteredAnimals.length > 20 && (
+                <p className="text-xs text-gray-600 mt-1">
+                  Showing first 20 of {filteredAnimals.length} sightings
+                </p>
+              )}
+            </div>
+            
+            {/* Animal count indicator */}
+            <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+              {filteredAnimals.length} Animals Found
             </div>
           </div>
         </div>
@@ -912,15 +1081,9 @@ export default function HomePage() {
               return (
                 <div
                   key={processedAnimal.key}
-                  className={`rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full transition-all duration-300 hover:scale-105 ${
-                    processedAnimal.isDangerous 
-                      ? 'bg-red-700 bg-opacity-70 border-2 border-red-500' 
-                      : 'bg-gray-800 bg-opacity-50 border-2 border-gray-600'
-                  }`}
+                  className="rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full transition-all duration-300 hover:scale-105 bg-gray-800 bg-opacity-50 border-2 border-gray-600"
                   style={{
-                    boxShadow: processedAnimal.isDangerous 
-                      ? '0 0 16px 2px #ff0000' 
-                      : '0 0 12px 2px rgba(255,255,255,0.1)',
+                    boxShadow: '0 0 12px 2px rgba(255,255,255,0.1)',
                   }}
                   onClick={() => setSelectedAnimal({
                     name: processedAnimal.name,
@@ -928,7 +1091,7 @@ export default function HomePage() {
                     desc: processedAnimal.desc,
                     rarity: processedAnimal.rarity,
                     imageUrl: processedAnimal.imageUrl,
-                    isDangerous: processedAnimal.isDangerous
+                    facts: processedAnimal.facts
                   })}
                 >
                   <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
@@ -948,11 +1111,6 @@ export default function HomePage() {
                   <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">
                     Scientific Name: {processedAnimal.sciName}
                   </p>
-                  {processedAnimal.isDangerous && (
-                    <p className="text-red-200 text-center mt-1 text-xs md:text-sm font-bold">
-                      ⚠️ Warning: This animal may be dangerous!
-                    </p>
-                  )}
                 </div>
               );
             })}
@@ -977,7 +1135,7 @@ export default function HomePage() {
                     desc: animal.desc,
                     rarity: 'common',
                     imageUrl: animal.imageUrl,
-                    isDangerous: false
+                    facts: generateAnimalFacts(animal.name, animal.sciName)
                   })}
                 >
                   <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
@@ -994,7 +1152,7 @@ export default function HomePage() {
                     Scientific Name: {animal.sciName}
                   </p>
                   <p className="text-gray-300 text-center mt-1 text-xs md:text-sm line-clamp-3">
-                    {animal.desc}
+                    {animal.desc.substring(0, 100)}...
                   </p>
                 </div>
               ))}
