@@ -99,6 +99,8 @@ export default function HomePage() {
   
   // Animal display state
   const [selectedAnimal, setSelectedAnimal] = useState<SelectedAnimal | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
+  const [savedAnimals, setSavedAnimals] = useState<SavedAnimal[]>([]);
   
   // Add Animal feature state
   const [showAddAnimal, setShowAddAnimal] = useState(false);
@@ -507,7 +509,26 @@ export default function HomePage() {
 
       {/* Top Navigation Bar */}
       <div className="absolute top-0 left-0 w-full flex justify-between items-center p-4 z-50">
-    
+        {/* Left side buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow"
+            title="Add Animal"
+          >
+            +
+          </button>
+          <button
+            className={`bg-gray-700 hover:bg-gray-800 text-white rounded px-3 py-2 font-bold shadow text-sm ml-1 ${showSaved ? 'bg-blue-700' : ''}`}
+            onClick={(e) => {
+              handleAnimationPress(e.currentTarget);
+              setShowSaved(s => !s);
+            }}
+            title={showSaved ? "Show Search" : "Show Saved Animals"}
+          >
+            {showSaved ? "Search" : "Saved"}
+          </button>
+        </div>
+
         {/* Help and Feedback buttons */}
         <div className="flex flex-col items-end mr-4 gap-2">
           <button
@@ -877,7 +898,16 @@ export default function HomePage() {
               <button
                 className="absolute top-4 left-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold shadow"
                 onClick={() => {
-                  
+                  setSavedAnimals(list => {
+                    if (list.some(a => a.name === selectedAnimal.name)) return list;
+                    return [...list, {
+                      name: selectedAnimal.name,
+                      sciName: selectedAnimal.sciName,
+                      desc: selectedAnimal.desc,
+                      imageUrl: selectedAnimal.imageUrl
+                    }];
+                  });
+                  alert('Animal added to Saved!');
                 }}
               >Add Animal</button>
             )}
@@ -1007,13 +1037,143 @@ export default function HomePage() {
       )}
 
       {/* Main Content Toggle: Search or Saved Animals */}
-      
+      {!showSaved ? (
+        <div className="flex flex-col items-center mt-6 mb-10 z-10 relative">
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">Animal Explorer</h1>
+          
+          {/* Location Search Bar */}
+          <form onSubmit={handleLocationSearch} className="flex flex-col items-center w-full max-w-xs md:max-w-md mb-4 gap-2">
+            {searchError && (
+              <div className="bg-red-700 text-white rounded px-3 py-1.5 mb-1 w-full text-center font-semibold text-sm">
+                {searchError}
+              </div>
+            )}
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Enter your location (city, address, etc.)"
+              className="px-3 py-1.5 rounded w-full bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-blue-500 mb-1 text-sm md:text-base"
+              required
+            />
+            <button 
+              type="submit" 
+              className="bg-blue-500 text-white px-3 py-1.5 rounded w-full hover:bg-blue-600 text-sm md:text-base disabled:bg-gray-500" 
+              disabled={loading}
+            >
+              {loading ? "Searching..." : "Find Animals Near Me"}
+            </button>
+          </form>
+          
+          {coords && (
+            <p className="text-gray-400 mb-2 text-sm md:text-base">
+              Showing animals within {searchRange} {searchUnit} of <span className="font-semibold">{location}</span>
+            </p>
+          )}
+          
+          {/* Animal Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4">
+            {filteredAnimals.length === 0 && coords && !loading && (
+              <p className="text-gray-400 col-span-full text-sm text-center">No animals found within {searchRange} {searchUnit} of this location.</p>
+            )}
+            
+            {filteredAnimals.map((animal, idx) => {
+              const processedAnimal = processAnimalData(animal, idx);
+              return (
+                <div
+                  key={processedAnimal.key}
+                  className={`rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full transition-all duration-300 hover:scale-105 ${
+                    processedAnimal.isDangerous 
+                      ? 'bg-red-700 bg-opacity-70 border-2 border-red-500' 
+                      : 'bg-gray-800 bg-opacity-50 border-2 border-gray-600'
+                  }`}
+                  style={{
+                    boxShadow: processedAnimal.isDangerous 
+                      ? '0 0 16px 2px #ff0000' 
+                      : '0 0 12px 2px rgba(255,255,255,0.1)',
+                  }}
+                  onClick={() => setSelectedAnimal({
+                    name: processedAnimal.name,
+                    sciName: processedAnimal.sciName,
+                    desc: processedAnimal.desc,
+                    rarity: processedAnimal.rarity,
+                    imageUrl: processedAnimal.imageUrl,
+                    isDangerous: processedAnimal.isDangerous,
+                    facts: processedAnimal.facts
+                  })}
+                >
+                  <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
+                    {processedAnimal.imageUrl ? (
+                      <Image 
+                        src={processedAnimal.imageUrl} 
+                        alt={processedAnimal.name} 
+                        width={96} 
+                        height={96} 
+                        className="object-cover w-full h-full rounded-full" 
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-xs">No image</span>
+                    )}
+                  </div>
+                  <h2 className="text-lg md:text-xl font-semibold mb-1 text-center">{processedAnimal.name}</h2>
+                  <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">
+                    Scientific Name: {processedAnimal.sciName}
+                  </p>
+                  {processedAnimal.isDangerous && (
+                    <p className="text-red-200 text-center mt-1 text-xs md:text-sm font-bold">
+                      ⚠️ Warning: This animal may be dangerous!
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
         /* Saved Animals View */
         <div className="flex flex-col items-center mt-6 mb-10 z-10 relative">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">Saved Animals</h1>
-          
+          {savedAnimals.length === 0 ? (
+            <p className="text-gray-400 text-center">No animals saved yet. Add animals using the + button!</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4">
+              {savedAnimals.map((animal, idx) => (
+                <div
+                  key={animal.name + idx}
+                  className="rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full bg-gray-800 bg-opacity-90 transition-all duration-300 hover:scale-105"
+                  style={{ border: '2px solid #4ade80', boxShadow: '0 0 16px 2px #4ade80', color: '#fff' }}
+                  onClick={() => setSelectedAnimal({
+                    name: animal.name,
+                    sciName: animal.sciName,
+                    desc: animal.desc,
+                    rarity: 'common',
+                    imageUrl: animal.imageUrl,
+                    isDangerous: false,
+                    facts: generateAnimalFacts(animal.name)
+                  })}
+                >
+                  <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
+                    <Image 
+                      src={animal.imageUrl} 
+                      alt={animal.name} 
+                      width={96} 
+                      height={96} 
+                      className="object-cover w-full h-full rounded-full" 
+                    />
+                  </div>
+                  <h2 className="text-lg md:text-xl font-semibold mb-1 text-center">{animal.name}</h2>
+                  <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">
+                    Scientific Name: {animal.sciName}
+                  </p>
+                  <p className="text-gray-300 text-center mt-1 text-xs md:text-sm line-clamp-3">
+                    {animal.desc.substring(0, 100)}...
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      
+      )}
     </div>
   );
 }
