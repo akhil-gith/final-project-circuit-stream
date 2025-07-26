@@ -519,31 +519,14 @@ export default function HomePage() {
       {/* Top Navigation Bar */}
       <div className="absolute top-0 left-0 w-full flex justify-between items-center p-4 z-50">
         {/* Left side buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow"
-            onClick={(e) => {
-              handleAnimationPress(e.currentTarget);
-              setShowAddAnimal(true);
-            }}
-            title="Add Animal"
-          >
-            +
-          </button>
-          <button
-            className={`bg-gray-700 hover:bg-gray-800 text-white rounded px-3 py-2 font-bold shadow text-sm ml-1 ${showSaved ? 'bg-blue-700' : ''}`}
-            onClick={(e) => {
-              handleAnimationPress(e.currentTarget);
-              setShowSaved(s => !s);
-            }}
-            title={showSaved ? "Show Search" : "Show Saved Animals"}
-          >
-            {showSaved ? "Search" : "Saved"}
-          </button>
-        </div>
+        {/* REMOVE the Add Animal (+) and Saved buttons */}
+        {/* <div className="flex items-center gap-2">
+          <button ...>+</button>
+          <button ...>Saved</button>
+        </div> */}
 
-        {/* Help and Feedback buttons */}
-        <div className="flex flex-col items-end mr-4 gap-2">
+        {/* Help and Feedback buttons - side by side */}
+        <div className="flex flex-row items-center gap-2 mr-4">
           <button
             className="bg-yellow-500 text-white px-3 py-2 rounded shadow hover:bg-yellow-600 font-bold"
             onClick={(e) => {
@@ -568,61 +551,7 @@ export default function HomePage() {
 
         {/* Right side - Auth/Profile */}
         <div className="flex items-center space-x-4">
-          <button
-            className="p-2 rounded-full bg-white hover:bg-gray-200 border border-gray-300 mr-2 text-xl"
-            onClick={(e) => {
-              handleAnimationPress(e.currentTarget);
-              setEditName(user?.name || "");
-              setEditPassword(user?.password || "");
-              setShowSettings(true);
-            }}
-            title="Settings"
-          >
-            ⚙️
-          </button>
-          
-          {!user ? (
-            <>
-              <button
-                className="bg-white text-black px-4 py-2 rounded mr-2 hover:bg-gray-200"
-                onClick={(e) => {
-                  handleAnimationPress(e.currentTarget);
-                  setShowAuth('login');
-                }}
-              >
-                Log In
-              </button>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                onClick={(e) => {
-                  handleAnimationPress(e.currentTarget);
-                  setShowAuth('signup');
-                }}
-              >
-                Sign Up
-              </button>
-            </>
-          ) : (
-            <>
-              {user.photoUrl ? (
-                <Image src={user.photoUrl} alt="Profile" width={32} height={32} className="rounded-full border-2 border-blue-400 shadow-lg" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-green-400 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">{user.name ? user.name[0].toUpperCase() : 'U'}</span>
-                </div>
-              )}
-              <span className="font-semibold">{user.name}</span>
-              <button
-                className="bg-white text-black px-4 py-2 rounded font-bold border-2 border-white hover:bg-gray-200"
-                onClick={(e) => {
-                  handleAnimationPress(e.currentTarget);
-                  setShowLogoutConfirm(true);
-                }}
-              >
-                Log Out
-              </button>
-            </>
-          )}
+          {/* ...existing profile/auth buttons... */}
         </div>
       </div>
 
