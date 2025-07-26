@@ -509,30 +509,7 @@ export default function HomePage() {
 
       {/* Top Navigation Bar */}
       <div className="absolute top-0 left-0 w-full flex justify-between items-center p-4 z-50">
-        {/* Left side buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow"
-            onClick={(e) => {
-              handleAnimationPress(e.currentTarget);
-              setShowAddAnimal(true);
-            }}
-            title="Add Animal"
-          >
-            +
-          </button>
-          <button
-            className={`bg-gray-700 hover:bg-gray-800 text-white rounded px-3 py-2 font-bold shadow text-sm ml-1 ${showSaved ? 'bg-blue-700' : ''}`}
-            onClick={(e) => {
-              handleAnimationPress(e.currentTarget);
-              setShowSaved(s => !s);
-            }}
-            title={showSaved ? "Show Search" : "Show Saved Animals"}
-          >
-            {showSaved ? "Search" : "Saved"}
-          </button>
-        </div>
-
+    
         {/* Help and Feedback buttons */}
         <div className="flex flex-col items-end mr-4 gap-2">
           <button
