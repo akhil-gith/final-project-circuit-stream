@@ -441,37 +441,37 @@ export default function HomePage() {
     } else if ('ebirdCommon' in animal) {
       name = animal.ebirdCommon || "Unknown";
       sciName = ('sciName' in animal) ? animal.sciName || "" : "";
+      desc = ""; // eBird usually doesn't provide a description
       source = 'ebird';
     } else if ('gbifSpecies' in animal) {
       name = animal.gbifSpecies || "Unknown";
       sciName = animal.gbifScientific || "";
-      source = 'gbif';
       desc = [animal.gbifClass, animal.gbifOrder, animal.gbifFamily, animal.gbifGenus]
         .filter(Boolean).join(", ");
+      source = 'gbif';
     }
 
     name = toTitleCase(name);
-    
-    // Always ensure we have a comprehensive description
-    if (!desc || desc.length < 100 || desc.split('.').length < 3) {
+
+    // Use API description if it's detailed enough, otherwise fallback
+    if (!desc || desc.length < 40) {
       desc = generateComprehensiveDescription(name, sciName, source, animal as AdditionalInfo);
     }
 
-    // Check if dangerous
-    const lowerName = name.toLowerCase();
-    const lowerSci = sciName.toLowerCase();
-    const lowerDesc = desc.toLowerCase();
-    const isDangerous = dangerKeywords.some(kw => 
-      lowerName.includes(kw) || lowerSci.includes(kw) || lowerDesc.includes(kw)
-    );
-
     // Determine rarity
+    const lowerName = name.toLowerCase();
+    const lowerDesc = desc.toLowerCase();
     const rarity: 'common' | 'rare' = (
       lowerName.includes('rare') || 
       lowerDesc.includes('rare') || 
       lowerDesc.includes('endangered') || 
       lowerDesc.includes('threatened')
     ) ? 'rare' : 'common';
+
+    // Determine if dangerous
+    const isDangerous = dangerKeywords.some(kw =>
+      lowerName.includes(kw) || lowerDesc.includes(kw)
+    );
 
     // Generate facts
     const facts = generateAnimalFacts(name);
@@ -513,6 +513,10 @@ export default function HomePage() {
         <div className="flex items-center gap-2">
           <button
             className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold shadow"
+            onClick={(e) => {
+              handleAnimationPress(e.currentTarget);
+              setShowAddAnimal(true);
+            }}
             title="Add Animal"
           >
             +
@@ -1072,62 +1076,62 @@ export default function HomePage() {
           )}
           
           {/* Animal Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4">
-            {filteredAnimals.length === 0 && coords && !loading && (
-              <p className="text-gray-400 col-span-full text-sm text-center">No animals found within {searchRange} {searchUnit} of this location.</p>
-            )}
-            
-            {filteredAnimals.map((animal, idx) => {
-              const processedAnimal = processAnimalData(animal, idx);
-              return (
-                <div
-                  key={processedAnimal.key}
-                  className={`rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full transition-all duration-300 hover:scale-105 ${
-                    processedAnimal.isDangerous 
-                      ? 'bg-red-700 bg-opacity-70 border-2 border-red-500' 
-                      : 'bg-gray-800 bg-opacity-50 border-2 border-gray-600'
-                  }`}
-                  style={{
-                    boxShadow: processedAnimal.isDangerous 
-                      ? '0 0 16px 2px #ff0000' 
-                      : '0 0 12px 2px rgba(255,255,255,0.1)',
-                  }}
-                  onClick={() => setSelectedAnimal({
-                    name: processedAnimal.name,
-                    sciName: processedAnimal.sciName,
-                    desc: processedAnimal.desc,
-                    rarity: processedAnimal.rarity,
-                    imageUrl: processedAnimal.imageUrl,
-                    isDangerous: processedAnimal.isDangerous,
-                    facts: processedAnimal.facts
-                  })}
-                >
-                  <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
-                    {processedAnimal.imageUrl ? (
-                      <Image 
-                        src={processedAnimal.imageUrl} 
-                        alt={processedAnimal.name} 
-                        width={96} 
-                        height={96} 
-                        className="object-cover w-full h-full rounded-full" 
-                      />
-                    ) : (
-                      <span className="text-gray-400 text-xs">No image</span>
-                    )}
-                  </div>
-                  <h2 className="text-lg md:text-xl font-semibold mb-1 text-center">{processedAnimal.name}</h2>
-                  <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">
-                    Scientific Name: {processedAnimal.sciName}
-                  </p>
-                  {processedAnimal.isDangerous && (
-                    <p className="text-red-200 text-center mt-1 text-xs md:text-sm font-bold">
-                      ⚠️ Warning: This animal may be dangerous!
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4">
+  {filteredAnimals.length === 0 && coords && !loading && (
+    <p className="text-gray-400 col-span-full text-sm text-center">No animals found within {searchRange} {searchUnit} of this location.</p>
+  )}
+  {filteredAnimals
+    .map((animal, idx) => processAnimalData(animal, idx))
+    .filter(animal =>
+      animal.imageUrl && animal.imageUrl.trim() !== "" &&
+      animal.name && animal.name !== "Unknown" &&
+      animal.sciName && animal.sciName !== "Unknown" &&
+      animal.desc && animal.desc.length > 40
+    )
+    .map((processedAnimal) => (
+      <div
+        key={processedAnimal.key}
+        className={`rounded-lg shadow-lg p-3 md:p-4 flex flex-col items-center cursor-pointer w-64 max-w-full transition-all duration-300 hover:scale-105 ${
+          processedAnimal.isDangerous 
+            ? 'bg-red-700 bg-opacity-70 border-2 border-red-500' 
+            : 'bg-gray-800 bg-opacity-50 border-2 border-gray-600'
+        }`}
+        style={{
+          boxShadow: processedAnimal.isDangerous 
+            ? '0 0 16px 2px #ff0000' 
+            : '0 0 12px 2px rgba(255,255,255,0.1)',
+        }}
+        onClick={() => setSelectedAnimal({
+          name: processedAnimal.name,
+          sciName: processedAnimal.sciName,
+          desc: processedAnimal.desc,
+          rarity: processedAnimal.rarity,
+          imageUrl: processedAnimal.imageUrl,
+          isDangerous: processedAnimal.isDangerous,
+          facts: processedAnimal.facts
+        })}
+      >
+        <div className="w-24 h-24 md:w-28 md:h-28 mb-2 bg-gray-700 bg-opacity-40 rounded-full flex items-center justify-center overflow-hidden">
+          <Image 
+            src={processedAnimal.imageUrl} 
+            alt={processedAnimal.name} 
+            width={96} 
+            height={96} 
+            className="object-cover w-full h-full rounded-full" 
+          />
+        </div>
+        <h2 className="text-lg md:text-xl font-semibold mb-1 text-center">{processedAnimal.name}</h2>
+        <p className="text-gray-400 mb-0.5 text-xs md:text-sm text-center">
+          Scientific Name: {processedAnimal.sciName}
+        </p>
+        {processedAnimal.isDangerous && (
+          <p className="text-red-200 text-center mt-1 text-xs md:text-sm font-bold">
+            ⚠️ Warning: This animal may be dangerous!
+          </p>
+        )}
+      </div>
+    ))}
+</div>
         </div>
       ) : (
         /* Saved Animals View */
